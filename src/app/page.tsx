@@ -1009,16 +1009,18 @@ export default function SabjiRateApp() {
         )}
       </main>
 
-      {/* Floating Calculator Icon */}
-      <div className="fixed bottom-24 right-4 z-50">
-        <Button
-          size="lg"
-          onClick={() => openCalculator()}
-          className="rounded-full w-14 h-14 bg-lime-500 hover:bg-lime-600 text-black shadow-lg"
-        >
-          <Calculator className="w-6 h-6" />
-        </Button>
-      </div>
+      {/* Floating Calculator Icon - Only show in main list view */}
+      {currentView === 'lists' && (
+        <div className="fixed bottom-24 right-4 z-50">
+          <Button
+            size="lg"
+            onClick={() => openCalculator()}
+            className="rounded-full w-14 h-14 bg-lime-500 hover:bg-lime-600 text-black shadow-lg"
+          >
+            <Calculator className="w-6 h-6" />
+          </Button>
+        </div>
+      )}
 
       {/* Delete List Icon in Current List */}
       {currentList && (
