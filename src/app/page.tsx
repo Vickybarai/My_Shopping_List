@@ -77,9 +77,15 @@ const PACKET_QUANTITIES = [
 ];
 
 const DOZEN_QUANTITIES = [
-  { dozens: 0.5, name: 'Half Dozen', nameHi: 'आधा दर्जन', nameMr: 'अर्धा डझन' },
-  { dozens: 1, name: '1 Dozen', nameHi: 'एक दर्जन', nameMr: 'एक डझन' },
-  { dozens: 2, name: '2 Dozens', nameHi: 'दो दर्जन', nameMr: 'दोन डझन' },
+  { dozens: 0.25, name: 'Quarter Dozen', nameHi: 'चौथाई दर्जन', nameMr: 'पाव डझन', count: 3 },
+  { dozens: 0.5, name: 'Half Dozen', nameHi: 'आधा दर्जन', nameMr: 'अर्धा डझन', count: 6 },
+  { dozens: 1, name: '1 Dozen', nameHi: 'एक दर्जन', nameMr: 'एक डझन', count: 12 },
+  { dozens: 1.5, name: '1½ Dozen', nameHi: 'डेढ़ दर्जन', nameMr: 'दीड डझन', count: 18 },
+  { dozens: 2, name: '2 Dozens', nameHi: 'दो दर्जन', nameMr: 'दोन डझन', count: 24 },
+  { dozens: 2.5, name: '2½ Dozens', nameHi: 'ढाई दर्जन', nameMr: 'अडीच डझन', count: 30 },
+  { dozens: 3, name: '3 Dozens', nameHi: 'तीन दर्जन', nameMr: 'तीन डझन', count: 36 },
+  { dozens: 4, name: '4 Dozens', nameHi: 'चार दर्जन', nameMr: 'चार डझन', count: 48 },
+  { dozens: 5, name: '5 Dozens', nameHi: 'पाँच दर्जन', nameMr: 'पाच डझन', count: 60 },
 ];
 
 // Number words lookup (0-100) for Hindi and Marathi
@@ -482,7 +488,7 @@ export default function SabjiRateApp() {
       if (activeCategory === Category.VEG_FRUITS && !editingItem.mode) {
         setCalculatorMode('dozen');
         setCalculatorDozen(1);
-        setCalculatorQuantity(DOZEN_QUANTITIES[1]);
+        setCalculatorQuantity(DOZEN_QUANTITIES[2]);
       } else {
         setCalculatorMode(editingItem.mode || 'weight');
         setCalculatorQuantity(editingItem.quantity);
@@ -496,7 +502,7 @@ export default function SabjiRateApp() {
       if (activeCategory === Category.VEG_FRUITS) {
         setCalculatorMode('dozen');
         setCalculatorDozen(1);
-        setCalculatorQuantity(DOZEN_QUANTITIES[1]);
+        setCalculatorQuantity(DOZEN_QUANTITIES[2]);
       } else {
         setCalculatorMode('weight');
         setCalculatorQuantity(null);
@@ -518,6 +524,7 @@ export default function SabjiRateApp() {
     const quantityData = calculatorMode === 'dozen'
       ? {
           dozens: calculatorDozen,
+          count: DOZEN_QUANTITIES.find(q => q.dozens === calculatorDozen)?.count || 12,
           name: DOZEN_QUANTITIES.find(q => q.dozens === calculatorDozen)?.name || '1 Dozen',
           nameHi: DOZEN_QUANTITIES.find(q => q.dozens === calculatorDozen)?.nameHi || 'एक दर्जन',
           nameMr: DOZEN_QUANTITIES.find(q => q.dozens === calculatorDozen)?.nameMr || 'एक डझन',
@@ -849,11 +856,13 @@ export default function SabjiRateApp() {
                       <div className="p-3 rounded-lg bg-slate-200 dark:bg-slate-900/50">
                         <div className="flex justify-between items-center mb-2">
                           <span className="text-sm text-slate-600 dark:text-slate-300">
-                            Base: {item.quantity.name} @ ₹{item.price} {item.mode === 'packet' ? `(${item.mode})` : ''}
+                            Base: {item.quantity.name} @ ₹{item.price} {item.mode === 'packet' ? `(${item.mode})` : item.mode === 'dozen' ? `(${item.quantity.count} pieces)` : ''}
                           </span>
                           <span className="text-lg font-bold text-lime-500">
                             {item.mode === 'packet'
                               ? `1 Packet = ₹${item.price}`
+                              : item.mode === 'dozen'
+                              ? `1 Dozen = ₹${((parseFloat(item.price) / item.quantity.dozens)).toFixed(2)} (₹${((parseFloat(item.price) / item.quantity.count)).toFixed(2)}/piece)`
                               : `1 ${item.category === Category.DAIRY && item.quantity.ml === 1000 ? 'Liter' : 'KG'} = ₹${((parseFloat(item.price) / ((item.quantity.grams || item.quantity.ml) / 1000))).toFixed(2)}`
                             }
                           </span>
@@ -1083,7 +1092,7 @@ export default function SabjiRateApp() {
                     onClick={() => { setCalculatorMode('dozen'); setCalculatorQuantity(null); }}
                     className={calculatorMode === 'dozen' ? 'bg-lime-500 hover:bg-lime-600 text-black' : 'border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300'}
                   >
-                    ◉ 1 Dozen
+                    ◉ 1 Dozen (Default)
                   </Button>
                   <Button
                     type="button"
@@ -1130,7 +1139,7 @@ export default function SabjiRateApp() {
                   >
                     {DOZEN_QUANTITIES.map((q, idx) => (
                       <option key={idx} value={String(q.dozens)}>
-                        {q.name} ({q.nameHi} / {q.nameMr})
+                        {q.name} ({q.nameHi} / {q.nameMr}) - {q.count} pieces
                       </option>
                     ))}
                   </select>
