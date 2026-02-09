@@ -852,20 +852,6 @@ export default function SabjiRateApp() {
                             }
                           </span>
                         </div>
-
-                        {item.calculatedPrices && item.calculatedPrices.length > 0 && (
-                          <div className="space-y-2 mt-3 max-h-48 overflow-y-auto">
-                            {item.calculatedPrices.map((cp, idx) => (
-                              <div key={idx} className="flex justify-between items-center text-sm p-2 rounded bg-slate-100 dark:bg-slate-800">
-                                <span className="text-slate-600 dark:text-slate-300">{cp.weight}</span>
-                                <span className="font-semibold text-lime-500">₹{cp.price.toFixed(2)}</span>
-                                <span className="text-xs text-slate-500 dark:text-slate-400">
-                                  {cp.wordsHi} रुपये | {cp.wordsMr} रुपये
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
                       </div>
                     )}
                   </CardContent>
