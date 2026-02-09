@@ -89,28 +89,47 @@ export const DAIRY = [
   { id: 'd9', en: 'Condensed Milk', hi: 'कंडेंस्ड मिल्क', mr: 'कंडेन्स्ड दूध' },
 ];
 
-export const KIRANA = [
+// KIRANA Subcategories
+export const KIRANA_GRAINS = [
   { id: 'k1', en: 'Rice', hi: 'चावल', mr: 'तांदूळ' },
   { id: 'k2', en: 'Basmati Rice', hi: 'बासमती चावल', mr: 'बासमती तांदूळ' },
   { id: 'k3', en: 'Wheat', hi: 'गेहूं', mr: 'गहू' },
   { id: 'k4', en: 'Atta', hi: 'आटा', mr: 'पीठ' },
   { id: 'k5', en: 'Maida', hi: 'मैदा', mr: 'मैदा' },
+];
+
+export const KIRANA_PULSES = [
   { id: 'k6', en: 'Toor Dal', hi: 'तूर दाल', mr: 'तूर डाळ' },
   { id: 'k7', en: 'Moong Dal', hi: 'मूंग दाल', mr: 'मूग डाळ' },
   { id: 'k8', en: 'Masoor Dal', hi: 'मसूर दाल', mr: 'मसूर डाळ' },
   { id: 'k9', en: 'Chana Dal', hi: 'चना दाल', mr: 'चना डाळ' },
   { id: 'k10', en: 'Urad Dal', hi: 'उड़द दाल', mr: 'उडीद डाळ' },
+];
+
+export const KIRANA_SWEETENERS = [
   { id: 'k11', en: 'Sugar', hi: 'चीनी', mr: 'साखर' },
   { id: 'k12', en: 'Jaggery', hi: 'गुड़', mr: 'गूळ' },
+];
+
+export const KIRANA_OILS = [
   { id: 'k13', en: 'Salt', hi: 'नमक', mr: 'मीठ' },
   { id: 'k14', en: 'Cooking Oil', hi: 'तेल', mr: 'तेल' },
   { id: 'k15', en: 'Mustard Oil', hi: 'सरसों तेल', mr: 'मोहरी तेल' },
   { id: 'k16', en: 'Groundnut Oil', hi: 'मूंगफली तेल', mr: 'शेंगदाणा तेल' },
+];
+
+export const KIRANA_BEVERAGES = [
   { id: 'k17', en: 'Tea', hi: 'चाय', mr: 'चहा' },
   { id: 'k18', en: 'Coffee', hi: 'कॉफी', mr: 'कॉफी' },
+];
+
+export const KIRANA_BREAKFAST = [
   { id: 'k19', en: 'Poha', hi: 'पोहा', mr: 'पोहे' },
   { id: 'k20', en: 'Rava', hi: 'सूजी', mr: 'रवा' },
   { id: 'k21', en: 'Besan', hi: 'बेसन', mr: 'बेसन' },
+];
+
+export const KIRANA_SPICES = [
   { id: 'k22', en: 'Sooji', hi: 'सूजी', mr: 'रवा' },
   { id: 'k23', en: 'Spices Mix', hi: 'मसाले', mr: 'मसाले' },
   { id: 'k24', en: 'Red Chilli Powder', hi: 'लाल मिर्च', mr: 'लाल तिखट' },
@@ -118,10 +137,6 @@ export const KIRANA = [
   { id: 'k26', en: 'Cumin Seeds', hi: 'जीरा', mr: 'जिरे' },
   { id: 'k27', en: 'Mustard Seeds', hi: 'राई', mr: 'मोहरी' },
   { id: 'k28', en: 'Tamarind', hi: 'इमली', mr: 'चिंच' },
-  { id: 'k29', en: 'Dry Coconut', hi: 'सूखा नारियल', mr: 'सुकं खोबरं' },
-  { id: 'k30', en: 'Dates', hi: 'खजूर', mr: 'खजूर' },
-  { id: 'k31', en: 'Cashew', hi: 'काजू', mr: 'काजू' },
-  { id: 'k32', en: 'Raisins', hi: 'किशमिश', mr: 'मनुका' },
   { id: 'k33', en: 'Red Chilli', hi: 'लाल मिर्च', mr: 'लाल मिरची' },
   { id: 'k34', en: 'Coriander Powder', hi: 'धनिया पाउडर', mr: 'कोथिंबीर पावडर' },
   { id: 'k35', en: 'Red Chilli Flakes', hi: 'लाल मिर्च के टुकड़े', mr: 'लाल मिरचीचे तुकडे' },
@@ -130,6 +145,25 @@ export const KIRANA = [
   { id: 'k38', en: 'Clove', hi: 'लौंग', mr: 'लवंग' },
   { id: 'k39', en: 'Cinnamon', hi: 'दालचीनी', mr: 'दालचिनी' },
   { id: 'k40', en: 'Cardamom', hi: 'इलायची', mr: 'वेलची' },
+];
+
+export const KIRANA_DRY_FRUITS = [
+  { id: 'k29', en: 'Dry Coconut', hi: 'सूखा नारियल', mr: 'सुकं खोबरं' },
+  { id: 'k30', en: 'Dates', hi: 'खजूर', mr: 'खजूर' },
+  { id: 'k31', en: 'Cashew', hi: 'काजू', mr: 'काजू' },
+  { id: 'k32', en: 'Raisins', hi: 'किशमिश', mr: 'मनुका' },
+];
+
+// Combined KIRANA for backward compatibility
+export const KIRANA = [
+  ...KIRANA_GRAINS,
+  ...KIRANA_PULSES,
+  ...KIRANA_SWEETENERS,
+  ...KIRANA_OILS,
+  ...KIRANA_BEVERAGES,
+  ...KIRANA_BREAKFAST,
+  ...KIRANA_SPICES,
+  ...KIRANA_DRY_FRUITS,
 ];
 
 // Export all items combined for easy access
@@ -142,37 +176,55 @@ export const ALL_ITEMS = {
 
 // Category enum
 export enum Category {
-  VEGETABLES = 'VEGETABLES',
-  FRUITS = 'FRUITS',
+  VEG_FRUITS = 'VEG_FRUITS',
   DAIRY = 'DAIRY',
   KIRANA = 'KIRANA',
 }
 
-// Unit types per category (STRICT RULES)
-export const CATEGORY_UNITS = {
-  [Category.VEGETABLES]: { type: 'GRAMS', baseUnit: 'KILOGRAM' },
-  [Category.FRUITS]: { type: 'GRAMS', baseUnit: 'KILOGRAM' },
-  [Category.DAIRY]: { type: 'MILLILITERS', baseUnit: 'LITER' },
-  [Category.KIRANA]: { type: 'GRAMS', baseUnit: 'KILOGRAM' },
-};
+// SubCategory enum
+export enum SubCategory {
+  VEGETABLES = 'VEGETABLES',
+  FRUITS = 'FRUITS',
+  KIRANA_GRAINS = 'KIRANA_GRAINS',
+  KIRANA_PULSES = 'KIRANA_PULSES',
+  KIRANA_SWEETENERS = 'KIRANA_SWEETENERS',
+  KIRANA_OILS = 'KIRANA_OILS',
+  KIRANA_BEVERAGES = 'KIRANA_BEVERAGES',
+  KIRANA_BREAKFAST = 'KIRANA_BREAKFAST',
+  KIRANA_SPICES = 'KIRANA_SPICES',
+  KIRANA_DRY_FRUITS = 'KIRANA_DRY_FRUITS',
+}
 
-// Canonical weight mappings (LOCKED - NO ALTERNATIVES)
-export const CANONICAL_WEIGHTS = {
-  // Vegetable/Fruit/Kirana weights (grams)
-  VEG_WEIGHTS: [
-    { grams: 62.5, localTerm: 'Half Chatak', hi: 'आधा छटक', mr: 'अर्धा छटक' },
-    { grams: 125, localTerm: '1 Chatak', hi: '1 छटक', mr: '1 छटक' },
-    { grams: 250, localTerm: 'Pav', hi: 'पाव', mr: 'पाव' },
-    { grams: 375, localTerm: 'Dedh Pav', hi: 'डेढ़ पाव', mr: 'डेढ पाव' },
-    { grams: 500, localTerm: 'Half Kilo', hi: 'आधा किलो', mr: 'अर्धा किलो' },
-    { grams: 750, localTerm: 'Paune Kilo', hi: 'पौने किलो', mr: 'पौने किलो' },
-    { grams: 1000, localTerm: '1 Kilo', hi: '1 किलो', mr: '1 किलो' },
-  ],
-  // Dairy weights (milliliters) - ABSOLUTE RULE: NO GRAMS/CHATAK/PAV
-  DAIRY_WEIGHTS: [
-    { ml: 250, localTerm: 'Quarter (पाव)', hi: 'पाव', mr: 'पाव' },
-    { ml: 500, localTerm: 'Half Liter', hi: 'अर्धा लीटर', mr: 'अर्धा लीटर' },
-    { ml: 750, localTerm: 'Paune Liter', hi: 'पौने लीटर', mr: 'पौने लीटर' },
-    { ml: 1000, localTerm: '1 Liter', hi: '1 लीटर', mr: '1 लीटर' },
-  ],
+// Category info
+export const CATEGORY_INFO = {
+  [Category.VEG_FRUITS]: {
+    title: '🥬🍎 Fruits & Vegetables',
+    icon: '🥬',
+    description: 'Fresh produce for daily needs',
+    subcategories: [
+      { key: SubCategory.VEGETABLES, title: '🥬 Vegetables', count: 50 },
+      { key: SubCategory.FRUITS, title: '🍎 Fruits', count: 20 },
+    ],
+  },
+  [Category.DAIRY]: {
+    title: '🥛 Milk & Dairy',
+    icon: '🥛',
+    description: 'Milk and dairy products',
+    subcategories: [],
+  },
+  [Category.KIRANA]: {
+    title: '🧺 Kirana / Grocery',
+    icon: '🧺',
+    description: 'Grocery and household items',
+    subcategories: [
+      { key: SubCategory.KIRANA_GRAINS, title: '🌾 Grains', count: 5 },
+      { key: SubCategory.KIRANA_PULSES, title: '🫘 Pulses', count: 5 },
+      { key: SubCategory.KIRANA_SWEETENERS, title: '🍬 Sweeteners', count: 2 },
+      { key: SubCategory.KIRANA_OILS, title: '🫒 Oils', count: 4 },
+      { key: SubCategory.KIRANA_BEVERAGES, title: '☕ Beverages', count: 2 },
+      { key: SubCategory.KIRANA_BREAKFAST, title: '🥣 Breakfast', count: 3 },
+      { key: SubCategory.KIRANA_SPICES, title: '🌶 Spices', count: 19 },
+      { key: SubCategory.KIRANA_DRY_FRUITS, title: '🥜 Dry Fruits', count: 4 },
+    ],
+  },
 };
