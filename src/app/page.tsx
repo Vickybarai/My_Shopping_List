@@ -860,7 +860,7 @@ export default function SabjiRateApp() {
                           </span>
                           <span className="text-lg font-bold text-lime-500">
                             {item.mode === 'packet'
-                              ? `1 Packet = ₹${item.price}`
+                              ? `${item.quantity.packets} Packet${item.quantity.packets > 1 ? 's' : ''} = ₹${item.price}`
                               : item.mode === 'dozen'
                               ? `1 Dozen = ₹${((parseFloat(item.price) / item.quantity.dozens)).toFixed(2)} (₹${((parseFloat(item.price) / item.quantity.count)).toFixed(2)}/piece)`
                               : `1 ${item.category === Category.DAIRY && item.quantity.ml === 1000 ? 'Liter' : 'KG'} = ₹${((parseFloat(item.price) / ((item.quantity.grams || item.quantity.ml) / 1000))).toFixed(2)}`
