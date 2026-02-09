@@ -345,6 +345,16 @@ export default function SabjiRateApp() {
   };
 
   const calculateAllPrices = (price: number, quantity: any, mode: 'weight' | 'packet', itemCategory: Category | null = null) => {
+    // Handle invalid price
+    if (isNaN(price) || price <= 0) {
+      return [];
+    }
+
+    // Handle invalid quantity
+    if (!quantity || typeof quantity !== 'object') {
+      return [];
+    }
+
     const category = itemCategory || activeCategory;
     if (mode === 'packet') {
       // For packet mode, calculate prices for 1-5 packets
@@ -366,6 +376,12 @@ export default function SabjiRateApp() {
     // For weight mode (original logic)
     const allQuantities = category === Category.DAIRY ? DAIRY_QUANTITIES : INDIAN_WEIGHTS;
     const quantityGrams = quantity.grams || quantity.ml || 1;
+
+    // Validate quantities exist
+    if (!allQuantities || allQuantities.length === 0) {
+      return [];
+    }
+
     const pricePerUnit = price / (quantityGrams / 1000);
 
     return allQuantities.map(q => {
@@ -837,7 +853,7 @@ export default function SabjiRateApp() {
                           </span>
                         </div>
 
-                        {item.calculatedPrices.length > 0 && (
+                        {item.calculatedPrices && item.calculatedPrices.length > 0 && (
                           <div className="space-y-2 mt-3 max-h-48 overflow-y-auto">
                             {item.calculatedPrices.map((cp, idx) => (
                               <div key={idx} className="flex justify-between items-center text-sm p-2 rounded bg-slate-100 dark:bg-slate-800">
