@@ -1308,7 +1308,7 @@ export default function SabjiRateApp() {
                             {q.weight}
                           </p>
                           <p className="text-xs text-slate-500 dark:text-slate-400">
-                            {q.nameHi} / {q.nameMr} {calculatorMode === 'weight' && (q.grams ? `- ${q.grams}g` : `- ${q.ml}ml`)}
+                            {q.nameHi} / {q.nameMr} {calculatorMode === 'weight' && ((calculatorItem ? activeCategory : activeCategory) === Category.DAIRY ? (q.grams ? `- ${q.grams}g` : `- ${q.ml}ml`) : (q.grams ? `- ${q.grams}g` : `- ${q.ml}ml`))}
                           </p>
                         </div>
                         <div className="text-right">
