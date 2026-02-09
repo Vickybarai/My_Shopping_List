@@ -1105,36 +1105,87 @@ export default function SabjiRateApp() {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            {/* Mode Toggle - Context Aware */}
+            {/* Mode Toggle */}
             <div className="flex gap-2">
-              {activeCategory === Category.VEG_FRUITS ? (
-                <>
-                  <Button
-                    type="button"
-                    variant={calculatorMode === 'dozen' ? 'default' : 'outline'}
-                    onClick={() => { setCalculatorMode('dozen'); setCalculatorQuantity(null); }}
-                    className={calculatorMode === 'dozen' ? 'bg-lime-500 hover:bg-lime-600 text-black' : 'border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300'}
-                  >
-                    ◉ 1 Dozen
-                  </Button>
+              <Button
+                type="button"
+                variant={calculatorMode === 'weight' ? 'default' : 'outline'}
+                onClick={() => { setCalculatorMode('weight'); setCalculatorQuantity(null); }}
+                className={calculatorMode === 'weight' ? 'bg-lime-500 hover:bg-lime-600 text-black' : 'border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300'}
+              >
+                ⚖️ Weight (Kg/g)
+              </Button>
+              <Button
+                type="button"
+                variant={calculatorMode === 'packet' ? 'default' : 'outline'}
+                onClick={() => { setCalculatorMode('packet'); setCalculatorQuantity(null); }}
+                className={calculatorMode === 'packet' ? 'bg-lime-500 hover:bg-lime-600 text-black' : 'border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300'}
+              >
+                📦 Packet
+              </Button>
+            </div>
+
+                    <Label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                      Name (Marathi)
+                    </Label>
+                    <Input
+                      type="text"
+                      placeholder="मराठीत नाव"
+                      value={editingItem && !calculatorItem ? editingItem.nameMr : customItemNameMr}
+                      onChange={(e) => setCustomItemNameMr(e.target.value)}
+                      className="w-full px-4 py-3 bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:placeholder:text-slate-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Quantity Selection for Non-Custom Items */}
+            {!isCustomItem && (
+              <div className="space-y-3">
+                <Label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                  Select quantity ({calculatorMode === 'weight' ? 'weight' : 'packet count'})
+                </Label>
+                <select
+                  value={calculatorMode === 'weight'
+                    ? String(calculatorQuantity?.grams !== undefined ? calculatorQuantity.grams : calculatorQuantity?.ml !== undefined ? calculatorQuantity.ml : '')
+                    : String(calculatorQuantity?.packets !== undefined ? calculatorQuantity.packets : '')}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    const quantities = calculatorMode === 'packet' ? PACKET_QUANTITIES : (activeCategory === Category.DAIRY ? DAIRY_QUANTITIES : INDIAN_WEIGHTS);
+                    const quantity = quantities.find(q => String(calculatorMode === 'packet' ? q.packets : (q.grams || q.ml)) === value);
+                    setCalculatorQuantity(quantity);
+                  }}
+                  className="w-full px-4 py-3 rounded-md border bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                >
+                  <option value="">Select {calculatorMode === 'weight' ? 'quantity' : 'packet count'}</option>
+                  {(calculatorMode === 'packet' ? PACKET_QUANTITIES : (activeCategory === Category.DAIRY ? DAIRY_QUANTITIES : INDIAN_WEIGHTS)).map((q, idx) => (
+                    <option key={idx} value={String(calculatorMode === 'packet' ? q.packets : (q.grams || q.ml))}>
+                      {q.name} ({q.nameHi} / {q.nameMr}) {calculatorMode === 'weight' ? `- ${q.grams ? `${q.grams}g` : `${q.ml}ml`}` : ''}
+                    </option>
+                  ))}
+                </select>
+                <Input
+                  type="number"
+                  placeholder="Enter price (₹)"
+                  value={calculatorPrice}
+                  onChange={(e) => setCalculatorPrice(e.target.value)}
+                  className="w-full px-4 py-3 bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:placeholder:text-slate-500"
+                />
+              </div>
+            )}
+
+            {/* Quantity Selection for Custom Items */}
+            {isCustomItem && (
+              <div className="space-y-3">
+                <div className="flex gap-2">
                   <Button
                     type="button"
                     variant={calculatorMode === 'weight' ? 'default' : 'outline'}
                     onClick={() => { setCalculatorMode('weight'); setCalculatorQuantity(null); }}
                     className={calculatorMode === 'weight' ? 'bg-lime-500 hover:bg-lime-600 text-black' : 'border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300'}
                   >
-                    ⚖️ Weight
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button
-                    type="button"
-                    variant={calculatorMode === 'weight' ? 'default' : 'outline'}
-                    onClick={() => { setCalculatorMode('weight'); setCalculatorQuantity(null); }}
-                    className={calculatorMode === 'weight' ? 'bg-lime-500 hover:bg-lime-600 text-black' : 'border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300'}
-                  >
-                    ⚖️ Weight
+                    ⚖️ Weight (Kg/g)
                   </Button>
                   <Button
                     type="button"
@@ -1144,68 +1195,46 @@ export default function SabjiRateApp() {
                   >
                     📦 Packet
                   </Button>
-                </>
-              )}
-            </div>
+                </div>
+                <Label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                  Select quantity ({calculatorMode === 'weight' ? 'weight' : 'packet count'})
+                </Label>
+                <select
+                  value={calculatorMode === 'weight'
+                    ? String(calculatorQuantity?.grams !== undefined ? calculatorQuantity.grams : calculatorQuantity?.ml !== undefined ? calculatorQuantity.ml : '')
+                    : String(calculatorQuantity?.packets !== undefined ? calculatorQuantity.packets : '')}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    const quantities = calculatorMode === 'packet' ? PACKET_QUANTITIES : (activeCategory === Category.DAIRY ? DAIRY_QUANTITIES : INDIAN_WEIGHTS);
+                    const quantity = quantities.find(q => String(calculatorMode === 'packet' ? q.packets : (q.grams || q.ml)) === value);
+                    setCalculatorQuantity(quantity);
+                  }}
+                  className="w-full px-4 py-3 rounded-md border bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                >
+                  <option value="">Select {calculatorMode === 'weight' ? 'quantity' : 'packet count'}</option>
+                  {(calculatorMode === 'packet' ? PACKET_QUANTITIES : (activeCategory === Category.DAIRY ? DAIRY_QUANTITIES : INDIAN_WEIGHTS)).map((q, idx) => (
+                    <option key={idx} value={String(calculatorMode === 'packet' ? q.packets : (q.grams || q.ml))}>
+                      {q.name} ({q.nameHi} / {q.nameMr}) {calculatorMode === 'weight' ? `- ${q.grams ? `${q.grams}g` : `${q.ml}ml`}` : ''}
+                    </option>
+                  ))}
+                </select>
+                <Label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                  Enter price (₹)
+                </Label>
+                <Input
+                  type="number"
+                  placeholder="Enter price (₹)"
+                  value={calculatorPrice}
+                  onChange={(e) => setCalculatorPrice(e.target.value)}
+                  className="w-full px-4 py-3 bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:placeholder:text-slate-500"
+                />
+              </div>
+            )}
 
-            {/* Quantity Selection */}
-            <div className="space-y-3">
-              {calculatorMode === 'dozen' ? (
-                <>
-                  <Label className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                    Select quantity (dozens)
-                  </Label>
-                  <select
-                    value={String(calculatorDozen)}
-                    onChange={(e) => setCalculatorDozen(Number(e.target.value))}
-                    className="w-full px-4 py-3 rounded-md border bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
-                  >
-                    {DOZEN_QUANTITIES.map((q, idx) => (
-                      <option key={idx} value={String(q.dozens)}>
-                        {q.name} ({q.nameHi} / {q.nameMr})
-                      </option>
-                    ))}
-                  </select>
-                </>
-              ) : (
-                <>
-                  <Label className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                    Select quantity ({calculatorMode === 'weight' ? 'weight' : 'packet count'})
-                  </Label>
-                  <select
-                    value={calculatorMode === 'weight'
-                      ? String(calculatorQuantity?.grams !== undefined ? calculatorQuantity.grams : calculatorQuantity?.ml !== undefined ? calculatorQuantity.ml : '')
-                      : String(calculatorQuantity?.packets !== undefined ? calculatorQuantity.packets : '')}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      const quantities = calculatorMode === 'packet' ? PACKET_QUANTITIES : (activeCategory === Category.DAIRY ? DAIRY_QUANTITIES : INDIAN_WEIGHTS);
-                      const quantity = quantities.find(q => String(calculatorMode === 'packet' ? q.packets : (q.grams || q.ml)) === value);
-                      setCalculatorQuantity(quantity);
-                    }}
-                    className="w-full px-4 py-3 rounded-md border bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
-                  >
-                    <option value="">Select {calculatorMode === 'weight' ? 'quantity' : 'packet count'}</option>
-                    {(calculatorMode === 'packet' ? PACKET_QUANTITIES : (activeCategory === Category.DAIRY ? DAIRY_QUANTITIES : INDIAN_WEIGHTS)).map((q, idx) => (
-                      <option key={idx} value={String(calculatorMode === 'packet' ? q.packets : (q.grams || q.ml))}>
-                        {q.name} ({q.nameHi} / {q.nameMr}) {calculatorMode === 'weight' ? `- ${q.grams ? `${q.grams}g` : `${q.ml}ml`}` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </>
-              )}
-              <Input
-                type="number"
-                placeholder="Enter price (₹)"
-                value={calculatorPrice}
-                onChange={(e) => setCalculatorPrice(e.target.value)}
-                className="w-full px-4 py-3 bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:placeholder:text-slate-500"
-              />
-            </div>
-
-            {calculatorPrice && (calculatorMode === 'dozen' || calculatorQuantity) && (
+            {calculatorPrice && calculatorQuantity && (
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                  {calculatorMode === 'dozen' ? 'Price for all dozen quantities:' : calculatorMode === 'packet' ? 'Price for all packet quantities:' : 'Price for all quantities:'}
+                  Price for all {calculatorMode === 'packet' ? 'packet quantities' : 'quantities'}:
                 </Label>
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {calculateAllPrices(parseFloat(calculatorPrice), calculatorQuantity, calculatorMode).map((q, idx) => (
@@ -1241,10 +1270,10 @@ export default function SabjiRateApp() {
             >
               Cancel
             </Button>
-            {calculatorPrice && (calculatorMode === 'dozen' || calculatorQuantity) && (
+            {calculatorPrice && calculatorQuantity && (
               <Button
                 onClick={handleAddOrUpdateItem}
-                disabled={!calculatorPrice || (calculatorMode !== 'dozen' && !calculatorQuantity)} className="bg-lime-500 hover:bg-lime-600 text-black font-medium">
+                disabled={!calculatorPrice || !calculatorQuantity} className="bg-lime-500 hover:bg-lime-600 text-black font-medium">
                   {editingItem ? 'Update Item' : 'Add to List'}
                 </Button>
             )}
