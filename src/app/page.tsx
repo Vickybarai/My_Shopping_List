@@ -76,6 +76,12 @@ const PACKET_QUANTITIES = [
   { packets: 5, name: '5 Packets', nameHi: '5 पैकेट', nameMr: '5 पॅकेट' },
 ];
 
+const DOZEN_QUANTITIES = [
+  { dozens: 0.5, name: 'Half Dozen', nameHi: 'आधा दर्जन', nameMr: 'अर्धा डझन' },
+  { dozens: 1, name: '1 Dozen', nameHi: 'एक दर्जन', nameMr: 'एक डझन' },
+  { dozens: 2, name: '2 Dozens', nameHi: 'दो दर्जन', nameMr: 'दोन डझन' },
+];
+
 // Number words lookup (0-100) for Hindi and Marathi
 const NUMBER_WORDS_HI: { [key: number]: string } = {
   0: 'शून्य', 1: 'एक', 2: 'दो', 3: 'तीन', 4: 'चार', 5: 'पाँच', 6: 'छह', 7: 'सात', 8: 'आठ', 9: 'नौ',
@@ -164,11 +170,8 @@ export default function SabjiRateApp() {
   const [calculatorItem, setCalculatorItem] = useState<any>(null);
   const [calculatorPrice, setCalculatorPrice] = useState('');
   const [calculatorQuantity, setCalculatorQuantity] = useState<any>(null);
-  const [calculatorMode, setCalculatorMode] = useState<'weight' | 'packet'>('weight');
-  const [isCustomItem, setIsCustomItem] = useState(false);
-  const [customItemName, setCustomItemName] = useState('');
-  const [customItemNameHi, setCustomItemNameHi] = useState('');
-  const [customItemNameMr, setCustomItemNameMr] = useState('');
+  const [calculatorDozen, setCalculatorDozen] = useState<number>(1);
+  const [calculatorMode, setCalculatorMode] = useState<'weight' | 'packet' | 'dozen'>('weight');
   
   // List management state
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
@@ -344,7 +347,7 @@ export default function SabjiRateApp() {
     setCurrentList(newList);
   };
 
-  const calculateAllPrices = (price: number, quantity: any, mode: 'weight' | 'packet', itemCategory: Category | null = null) => {
+  const calculateAllPrices = (price: number, quantity: any, mode: 'weight' | 'packet' | 'dozen', itemCategory: Category | null = null) => {
     // Handle invalid price
     if (isNaN(price) || price <= 0) {
       return [];
@@ -366,6 +369,23 @@ export default function SabjiRateApp() {
           nameHi: `${q.packets} पैकेट`,
           nameMr: `${q.packets} पॅकेट`,
           packets: q.packets,
+          price: calculatedPrice,
+          wordsHi: words.hi,
+          wordsMr: words.mr,
+        };
+      });
+    }
+
+    if (mode === 'dozen') {
+      // For dozen mode (fruits), calculate prices for half dozen to 2 dozens
+      return DOZEN_QUANTITIES.map(q => {
+        const calculatedPrice = price * q.dozens;
+        const words = numberToWords(calculatedPrice);
+        return {
+          weight: `${q.dozens} Dozen${q.dozens !== 1 ? 's' : ''}`,
+          nameHi: `${q.dozens} दर्जन`,
+          nameMr: `${q.dozens} डझन`,
+          dozens: q.dozens,
           price: calculatedPrice,
           wordsHi: words.hi,
           wordsMr: words.mr,
@@ -456,7 +476,7 @@ export default function SabjiRateApp() {
     if (editingItem) {
       // Load existing item data when editing
       const isEditingCustomItem = editingItem.itemId === -1;
-      
+
       if (isEditingCustomItem || forceCustom) {
         // Editing custom item or forcing custom mode - show custom form
         setCalculatorItem(editingItem);
@@ -473,7 +493,15 @@ export default function SabjiRateApp() {
         setCalculatorItem(editingItem);
         setCalculatorPrice(editingItem.price);
         setCalculatorQuantity(editingItem.quantity);
-        setCalculatorMode(editingItem.mode || 'weight');
+        // For fruits, default to dozen mode
+        if (activeCategory === Category.VEG_FRUITS && !editingItem.mode) {
+          setCalculatorMode('dozen');
+          setCalculatorDozen(1);
+          setCalculatorQuantity(DOZEN_QUANTITIES[1]);
+        } else {
+          setCalculatorMode(editingItem.mode || 'weight');
+          setCalculatorQuantity(editingItem.quantity);
+        }
         setIsCustomItem(false);
         setCustomItemName('');
         setCustomItemNameHi('');
@@ -484,8 +512,15 @@ export default function SabjiRateApp() {
       const selectedItem = getFilteredItems().find((item: any) => selectedItems.has(Array.from(selectedItems)[0]));
       setCalculatorItem(selectedItem);
       setCalculatorPrice('');
-      setCalculatorQuantity(null);
-      setCalculatorMode('weight');
+      // For fruits, default to dozen mode
+      if (activeCategory === Category.VEG_FRUITS) {
+        setCalculatorMode('dozen');
+        setCalculatorDozen(1);
+        setCalculatorQuantity(DOZEN_QUANTITIES[1]);
+      } else {
+        setCalculatorMode('weight');
+        setCalculatorQuantity(null);
+      }
       setIsCustomItem(false);
       setCustomItemName('');
       setCustomItemNameHi('');
@@ -495,7 +530,9 @@ export default function SabjiRateApp() {
       setCalculatorItem(null);
       setCalculatorPrice('');
       setCalculatorQuantity(null);
-      setCalculatorMode('weight');
+      setCalculatorDozen(1);
+      // For fruits, default to dozen mode
+      setCalculatorMode(activeCategory === Category.VEG_FRUITS ? 'dozen' : 'weight');
       setIsCustomItem(true);
       setCustomItemName('');
       setCustomItemNameHi('');
@@ -506,14 +543,14 @@ export default function SabjiRateApp() {
 
   // Handle Add/Update Item in Calculator
   const handleAddOrUpdateItem = () => {
-    const itemData = isCustomItem ? {
-      en: customItemName,
-      hi: customItemNameHi,
-      mr: customItemNameMr,
-      id: -1
-    } : calculatorItem;
-
-    const quantityData = calculatorMode === 'packet'
+    const quantityData = calculatorMode === 'dozen'
+      ? {
+          dozens: calculatorDozen,
+          name: DOZEN_QUANTITIES.find(q => q.dozens === calculatorDozen)?.name || '1 Dozen',
+          nameHi: DOZEN_QUANTITIES.find(q => q.dozens === calculatorDozen)?.nameHi || 'एक दर्जन',
+          nameMr: DOZEN_QUANTITIES.find(q => q.dozens === calculatorDozen)?.nameMr || 'एक डझन',
+        }
+      : calculatorMode === 'packet'
       ? {
           packets: calculatorQuantity?.packets,
           name: `${calculatorQuantity?.packets} Packet${(calculatorQuantity?.packets || 0) > 1 ? 's' : ''}`,
@@ -537,7 +574,7 @@ export default function SabjiRateApp() {
           mode: calculatorMode,
           price: calculatorPrice,
           quantity: quantityData,
-          calculatedPrices: calculateAllPrices(parseFloat(calculatorPrice), calculatorQuantity, calculatorMode, editingItem.category),
+          calculatedPrices: calculateAllPrices(parseFloat(calculatorPrice), calculatorMode === 'dozen' ? calculatorDozen : calculatorQuantity, calculatorMode, editingItem.category),
         };
         const updatedList = { ...currentList!, items: updatedItems };
         setCurrentList(updatedList);
@@ -546,15 +583,15 @@ export default function SabjiRateApp() {
     } else {
       const newItem = {
         id: `item-${Date.now()}`,
-        itemId: itemData.id,
-        name: itemData.en || customItemName,
-        nameHi: itemData.hi || customItemNameHi,
-        nameMr: itemData.mr || customItemNameMr,
+        itemId: calculatorItem?.id || -1,
+        name: calculatorItem?.en || customItemName,
+        nameHi: calculatorItem?.hi || customItemNameHi,
+        nameMr: calculatorItem?.mr || customItemNameMr,
         category: activeCategory!,
         mode: calculatorMode,
         quantity: quantityData,
         price: calculatorPrice,
-        calculatedPrices: calculateAllPrices(parseFloat(calculatorPrice), calculatorQuantity, calculatorMode, activeCategory!),
+        calculatedPrices: calculateAllPrices(parseFloat(calculatorPrice), calculatorMode === 'dozen' ? calculatorDozen : calculatorQuantity, calculatorMode, activeCategory!),
       };
       const updatedList = { ...currentList!, items: [...currentList!.items, newItem] };
       setCurrentList(updatedList);
@@ -565,6 +602,7 @@ export default function SabjiRateApp() {
     setCalculatorItem(null);
     setCalculatorPrice('');
     setCalculatorQuantity(null);
+    setCalculatorDozen(1);
     setCalculatorMode('weight');
     setIsCustomItem(false);
     setCustomItemName('');
