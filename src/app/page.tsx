@@ -502,6 +502,16 @@ export default function SabjiRateApp() {
         setCalculatorMode(editingItem.mode || 'weight');
         setCalculatorQuantity(editingItem.quantity);
       }
+      setShowCalculator(true);
+    } else if (forceCustom) {
+      // Custom Item button clicked - show custom item form
+      setCalculatorItem(null);
+      setCalculatorPrice('');
+      setCalculatorQuantity(null);
+      setCalculatorDozen(1);
+      // For fruits, default to dozen mode
+      setCalculatorMode(activeCategory === Category.VEG_FRUITS ? 'dozen' : 'weight');
+      setShowCalculator(true);
     } else if (activeSubCategory && selectedItems.size === 1) {
       // Load selected item for new addition
       const selectedItem = getFilteredItems().find((item: any) => selectedItems.has(Array.from(selectedItems)[0]));
@@ -516,16 +526,17 @@ export default function SabjiRateApp() {
         setCalculatorMode('weight');
         setCalculatorQuantity(null);
       }
+      setShowCalculator(true);
     } else {
-      // When no item selected
+      // When no item selected (main list view)
       setCalculatorItem(null);
       setCalculatorPrice('');
       setCalculatorQuantity(null);
       setCalculatorDozen(1);
       // For fruits, default to dozen mode
       setCalculatorMode(activeCategory === Category.VEG_FRUITS ? 'dozen' : 'weight');
+      setShowCalculator(true);
     }
-    setShowCalculator(true);
   };
 
   // Handle Add/Update Item in Calculator
