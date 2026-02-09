@@ -21,9 +21,11 @@ interface ListItem {
   nameHi: string;
   nameMr: string;
   category: Category;
+  mode: 'weight' | 'packet';
   quantity: {
     grams?: number;
     ml?: number;
+    packets?: number;
     name: string;
     nameHi: string;
     nameMr: string;
@@ -66,70 +68,80 @@ const DAIRY_QUANTITIES = [
   { ml: 1000, name: '1 Liter', nameHi: '1 लीटर', nameMr: '1 लिटर' },
 ];
 
-// Fixed numberToWords function - no paise, only rupees
+const PACKET_QUANTITIES = [
+  { packets: 1, name: '1 Packet', nameHi: '1 पैकेट', nameMr: '1 पॅकेट' },
+  { packets: 2, name: '2 Packets', nameHi: '2 पैकेट', nameMr: '2 पॅकेट' },
+  { packets: 3, name: '3 Packets', nameHi: '3 पैकेट', nameMr: '3 पॅकेट' },
+  { packets: 4, name: '4 Packets', nameHi: '4 पैकेट', nameMr: '4 पॅकेट' },
+  { packets: 5, name: '5 Packets', nameHi: '5 पैकेट', nameMr: '5 पॅकेट' },
+];
+
+// Number words lookup (0-100) for Hindi and Marathi
+const NUMBER_WORDS_HI: { [key: number]: string } = {
+  0: 'शून्य', 1: 'एक', 2: 'दो', 3: 'तीन', 4: 'चार', 5: 'पाँच', 6: 'छह', 7: 'सात', 8: 'आठ', 9: 'नौ',
+  10: 'दस', 11: 'ग्यारह', 12: 'बारह', 13: 'तेरह', 14: 'चौदह', 15: 'पन्द्रह', 16: 'सोलह', 17: 'सत्रह', 18: 'अठारह', 19: 'उन्नीस',
+  20: 'बीस', 21: 'इक्कीस', 22: 'बाईस', 23: 'तेईस', 24: 'चौबीस', 25: 'पच्चीस', 26: 'छब्बीस', 27: 'सत्ताईस', 28: 'अट्ठाईस', 29: 'उनतीस',
+  30: 'तीस', 31: 'इकतीस', 32: 'बतीस', 33: 'तैंतीस', 34: 'चौतीस', 35: 'पैंतीस', 36: 'छतीस', 37: 'सैंतीस', 38: 'अड़तीस', 39: 'उनतालीस',
+  40: 'चालीस', 41: 'इकतालीस', 42: 'बयालीस', 43: 'तैंतालीस', 44: 'चौवालीस', 45: 'पैंतालीस', 46: 'छियालीस', 47: 'सैंतालीस', 48: 'अड़तालीस', 49: 'उनचास',
+  50: 'पचास', 51: 'इक्यावन', 52: 'बावन', 53: 'तिरेपन', 54: 'चौवन', 55: 'पचपन', 56: 'छप्पन', 57: 'सत्तावन', 58: 'अट्ठावन', 59: 'उनसठ',
+  60: 'साठ', 61: 'इकसठ', 62: 'बासठ', 63: 'तिरेसठ', 64: 'चौसठ', 65: 'पैंसठ', 66: 'छियासठ', 67: 'सड़सठ', 68: 'अड़सठ', 69: 'उनहत्तर',
+  70: 'सत्तर', 71: 'इकहत्तर', 72: 'बहत्तर', 73: 'तिहत्तर', 74: 'चौहत्तर', 75: 'पचहत्तर', 76: 'छिहत्तर', 77: 'सत्तहत्तर', 78: 'अठहत्तर', 79: 'उनासी',
+  80: 'अस्सी', 81: 'इक्यासी', 82: 'बयासी', 83: 'तिरासी', 84: 'चौरासी', 85: 'पचासी', 86: 'छियासी', 87: 'सत्तासी', 88: 'अट्ठासी', 89: 'नवासी',
+  90: 'नब्बे', 91: 'इक्यानवे', 92: 'बानवे', 93: 'तिरानवे', 94: 'चौरानवे', 95: 'पचानवे', 96: 'छियानवे', 97: 'सत्तानवे', 98: 'अट्ठानवे', 99: 'निन्यानवे',
+  100: 'सौ'
+};
+
+const NUMBER_WORDS_MR: { [key: number]: string } = {
+  0: 'शून्या', 1: 'एक', 2: 'दोन', 3: 'तीन', 4: 'चार', 5: 'पाच', 6: 'सहा', 7: 'सात', 8: 'आठ', 9: 'नव',
+  10: 'दहा', 11: 'अकरा', 12: 'बारा', 13: 'तेरा', 14: 'चौदा', 15: 'पंधरा', 16: 'सोळा', 17: 'सत्रा', 18: 'अठरा', 19: 'एकोणीस',
+  20: 'वीस', 21: 'एकवीस', 22: 'बावीस', 23: 'तेवीस', 24: 'चोवीस', 25: 'पंचीस', 26: 'शेवीस', 27: 'सत्तावीस', 28: 'अठ्तावीस', 29: 'एकोणतीस',
+  30: 'तीस', 31: 'एकतीस', 32: 'बतीस', 33: 'तेतीस', 34: 'चौतीस', 35: 'पंचतीस', 36: 'छतीस', 37: 'सैंतीस', 38: 'अठतीस', 39: 'एकोणचाळीस',
+  40: 'चाळीस', 41: 'एकताळीस', 42: 'बेचाळीस', 43: 'तेचाळीस', 44: 'चौचाळीस', 45: 'पंचेचाळीस', 46: 'शेचाळीस', 47: 'सैंताळीस', 48: 'अठेचाळीस', 49: 'एकोणन्नवेचाळीस',
+  50: 'पन्नास', 51: 'एक्यावन्नवे', 52: 'बावन्नवे', 53: 'त्रेपन्नवे', 54: 'चौवन्नवे', 55: 'पंचावन्नवे', 56: 'शावन्नवे', 57: 'सत्तावन्नवे', 58: 'अठ्यावन्नवे', 59: 'एकोणसठ',
+  60: 'साठ', 61: 'एकसठ', 62: 'बासठ', 63: 'त्रेसठ', 64: 'चौसठ', 65: 'पसठ', 66: 'शेसठ', 67: 'सत्तौसठ', 68: 'अठ्सठ', 69: 'एकोणहत्तर',
+  70: 'सत्तर', 71: 'एकहत्तर', 72: 'बहत्तर', 73: 'त्रेहत्तर', 74: 'चौहत्तर', 75: 'पंचहत्तर', 76: 'शेहत्तर', 77: 'सत्त्तहत्तर', 78: 'अठ्हत्तर', 79: 'एकोणासी',
+  80: 'अस्सी', 81: 'एक्यासी', 82: 'बयासी', 83: 'त्र्यासी', 84: 'चौऱ्यासी', 85: 'पंच्यासी', 86: 'शेयासी', 87: 'सत्त्यासी', 88: 'अठ्यासी', 89: 'एकोणनव्वे',
+  90: 'नव्वे', 91: 'एक्याणनव्वे', 92: 'बयाणनव्वे', 93: 'त्रयाणनव्वे', 94: 'चौऱ्याणनव्वे', 95: 'पंच्याणनव्वे', 96: 'शेणनव्वे', 97: 'सत्त्याणनव्वे', 98: 'अठ्याणनव्वे', 99: 'नव्याणनव्वे',
+  100: 'शंभर'
+};
+
+// Fixed numberToWords function - uses lookup table for 0-100
 const numberToWords = (num: number): { hi: string; mr: string } => {
   const numInt = Math.floor(num);
 
-  if (numInt === 0) return { hi: 'शून्य', mr: 'शून्या' };
+  // Direct lookup for 0-100
+  if (numInt <= 100 && numInt >= 0) {
+    return {
+      hi: NUMBER_WORDS_HI[numInt] || 'शून्य',
+      mr: NUMBER_WORDS_MR[numInt] || 'शून्या'
+    };
+  }
 
-  const units = ['', 'एक', 'दो', 'तीन', 'चार', 'पाँच', 'छह', 'सात', 'आठ', 'नौ', 'दस'];
-  const tens = ['', 'दस', 'बीस', 'तीस', 'चालीस', 'पचास', 'साठ', 'सत्तर', 'अस्सी', 'नब्बे'];
-
-  const unitsMr = ['', 'एक', 'दोन', 'तीन', 'चार', 'पाच', 'सहा', 'सात', 'आठ', 'नव', 'दहा'];
-  const tensMr = ['', 'वीस', 'बीस', 'तीस', 'चाळीस', 'पन्नास', 'साठ', 'सत्तर', 'अस्सी', 'नव्व्या'];
+  // For numbers above 100, use hundreds + lookup for remainder
+  const hundredDigit = Math.floor(numInt / 100);
+  const remainder = numInt % 100;
 
   let hi = '';
   let mr = '';
 
-  if (numInt >= 100) {
-    const hundredDigit = Math.floor(numInt / 100);
-    const remainder = numInt % 100;
+  // Hundred part
+  if (hundredDigit === 1) {
+    hi += 'सौ';
+    mr += 'शंभर';
+  } else if (hundredDigit === 2) {
+    hi += 'दो सौ';
+    mr += 'दोनशे';
+  } else if (hundredDigit >= 3 && hundredDigit <= 10) {
+    hi += `${NUMBER_WORDS_HI[hundredDigit]} सौ`;
+    mr += `${NUMBER_WORDS_MR[hundredDigit]}शे`;
+  }
 
-    if (hundredDigit === 1) {
-      hi += 'सौ';
-      mr += 'शंभर';
-    } else if (hundredDigit === 2) {
-      hi += 'दो सौ';
-      mr += 'दोन शे';
-    } else {
-      hi += `${units[hundredDigit]} सौ`;
-      mr += `${unitsMr[hundredDigit]}शे`;
-    }
-
-    if (remainder > 0) {
-      hi += ' ';
-      mr += ' ';
-      if (remainder < 10) {
-        hi += units[remainder];
-        mr += unitsMr[remainder];
-      } else if (remainder < 20) {
-        const teensHi = ['दस', 'ग्यारह', 'बारह', 'तेरह', 'चौदह', 'पन्द्रह', 'सोलह', 'सत्रह', 'अठारह', 'उन्नीस'];
-        const teensMr = ['दहा', 'अकरा', 'बारा', 'तेरा', 'चौदा', 'पंधरा', 'सोळा', 'सत्रा', 'अठरा', 'एकोणीस'];
-        const index = remainder - 10;
-        hi += teensHi[index];
-        mr += teensMr[index];
-      } else {
-        const tensDigit = Math.floor(remainder / 10);
-        const unitDigit = remainder % 10;
-        hi += (unitDigit > 0 ? `${units[unitDigit]} ${tens[tensDigit - 1]}` : tens[tensDigit - 1]);
-        mr += (unitDigit > 0 ? `${unitsMr[unitDigit]} ${tensMr[tensDigit - 1]}` : tensMr[tensDigit - 1]);
-      }
-    }
-  } else {
-    if (numInt < 10) {
-      hi += units[numInt];
-      mr += unitsMr[numInt];
-    } else if (numInt < 20) {
-      const teensHi = ['दस', 'ग्यारह', 'बारह', 'तेरह', 'चौदह', 'पन्द्रह', 'सोलह', 'सत्रह', 'अठारह', 'उन्नीस'];
-      const teensMr = ['दहा', 'अकरा', 'बारा', 'तेरा', 'चौदा', 'पंधरा', 'सोळा', 'सत्रा', 'अठरा', 'एकोणीस'];
-      hi += teensHi[numInt - 10];
-      mr += teensMr[numInt - 10];
-    } else {
-      const tensDigit = Math.floor(numInt / 10);
-      const unitDigit = numInt % 10;
-      hi += (unitDigit > 0 ? `${units[unitDigit]} ${tens[tensDigit - 1]}` : tens[tensDigit - 1]);
-      mr += (unitDigit > 0 ? `${unitsMr[unitDigit]} ${tensMr[tensDigit - 1]}` : tensMr[tensDigit - 1]);
-    }
+  // Remainder part
+  if (remainder > 0 && remainder <= 100) {
+    hi += ' ';
+    mr += ' ';
+    hi += NUMBER_WORDS_HI[remainder];
+    mr += NUMBER_WORDS_MR[remainder];
   }
 
   return { hi, mr };
@@ -152,6 +164,11 @@ export default function SabjiRateApp() {
   const [calculatorItem, setCalculatorItem] = useState<any>(null);
   const [calculatorPrice, setCalculatorPrice] = useState('');
   const [calculatorQuantity, setCalculatorQuantity] = useState<any>(null);
+  const [calculatorMode, setCalculatorMode] = useState<'weight' | 'packet'>('weight');
+  const [isCustomItem, setIsCustomItem] = useState(false);
+  const [customItemName, setCustomItemName] = useState('');
+  const [customItemNameHi, setCustomItemNameHi] = useState('');
+  const [customItemNameMr, setCustomItemNameMr] = useState('');
   
   // List management state
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
@@ -171,6 +188,7 @@ export default function SabjiRateApp() {
   });
   const [currentList, setCurrentList] = useState<ShoppingList | null>(null);
   const [editingItem, setEditingItem] = useState<ListItem | null>(null);
+  const [isCustomItemForList, setIsCustomItemForList] = useState(false);
   
   // Delete confirmation
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -298,6 +316,7 @@ export default function SabjiRateApp() {
       nameHi: item.hi,
       nameMr: item.mr,
       category: activeCategory!,
+      mode: 'weight',
       quantity: {
         grams: undefined,
         ml: undefined,
@@ -325,8 +344,27 @@ export default function SabjiRateApp() {
     setCurrentList(newList);
   };
 
-  const calculateAllPrices = (price: number, quantity: any) => {
-    const allQuantities = activeCategory === Category.DAIRY ? DAIRY_QUANTITIES : INDIAN_WEIGHTS;
+  const calculateAllPrices = (price: number, quantity: any, mode: 'weight' | 'packet', itemCategory: Category | null = null) => {
+    const category = itemCategory || activeCategory;
+    if (mode === 'packet') {
+      // For packet mode, calculate prices for 1-5 packets
+      return PACKET_QUANTITIES.map(q => {
+        const calculatedPrice = price * q.packets;
+        const words = numberToWords(calculatedPrice);
+        return {
+          weight: `${q.packets} Packet${q.packets > 1 ? 's' : ''}`,
+          nameHi: `${q.packets} पैकेट`,
+          nameMr: `${q.packets} पॅकेट`,
+          packets: q.packets,
+          price: calculatedPrice,
+          wordsHi: words.hi,
+          wordsMr: words.mr,
+        };
+      });
+    }
+
+    // For weight mode (original logic)
+    const allQuantities = category === Category.DAIRY ? DAIRY_QUANTITIES : INDIAN_WEIGHTS;
     const quantityGrams = quantity.grams || quantity.ml || 1;
     const pricePerUnit = price / (quantityGrams / 1000);
 
@@ -384,12 +422,138 @@ export default function SabjiRateApp() {
     currentList.items.forEach(item => {
       if (item.price && item.quantity) {
         const price = parseFloat(item.price);
-        const quantityGrams = item.quantity.grams || item.quantity.ml || 1;
-        const pricePerKg = (price / (quantityGrams / 1000));
-        total += pricePerKg; // Sum of 1KG prices
+        // For packet mode, add price directly (per packet), for weight mode convert to 1KG price
+        if (item.mode === 'packet') {
+          total += price;
+        } else {
+          const quantityGrams = item.quantity.grams || item.quantity.ml || 1;
+          const pricePerKg = (price / (quantityGrams / 1000));
+          total += pricePerKg; // Sum of 1KG prices
+        }
       }
     });
     return total;
+  };
+
+  // Open Calculator Helper
+  const openCalculator = (forceCustom: boolean = false) => {
+    if (editingItem) {
+      // Load existing item data when editing
+      const isEditingCustomItem = editingItem.itemId === -1;
+      
+      if (isEditingCustomItem || forceCustom) {
+        // Editing custom item or forcing custom mode - show custom form
+        setCalculatorItem(editingItem);
+        setCalculatorPrice(editingItem.price);
+        setCalculatorQuantity(editingItem.quantity);
+        setCalculatorMode(editingItem.mode || 'weight');
+        setIsCustomItem(true);
+        // Set custom item names from the editing item
+        setCustomItemName(editingItem.name);
+        setCustomItemNameHi(editingItem.nameHi);
+        setCustomItemNameMr(editingItem.nameMr);
+      } else {
+        // Editing regular item - hide custom form, show normal quantity selection
+        setCalculatorItem(editingItem);
+        setCalculatorPrice(editingItem.price);
+        setCalculatorQuantity(editingItem.quantity);
+        setCalculatorMode(editingItem.mode || 'weight');
+        setIsCustomItem(false);
+        setCustomItemName('');
+        setCustomItemNameHi('');
+        setCustomItemNameMr('');
+      }
+    } else if (activeSubCategory && selectedItems.size === 1) {
+      // Load selected item for new addition
+      const selectedItem = getFilteredItems().find((item: any) => selectedItems.has(Array.from(selectedItems)[0]));
+      setCalculatorItem(selectedItem);
+      setCalculatorPrice('');
+      setCalculatorQuantity(null);
+      setCalculatorMode('weight');
+      setIsCustomItem(false);
+      setCustomItemName('');
+      setCustomItemNameHi('');
+      setCustomItemNameMr('');
+    } else {
+      // For new custom items or when no item selected
+      setCalculatorItem(null);
+      setCalculatorPrice('');
+      setCalculatorQuantity(null);
+      setCalculatorMode('weight');
+      setIsCustomItem(true);
+      setCustomItemName('');
+      setCustomItemNameHi('');
+      setCustomItemNameMr('');
+    }
+    setShowCalculator(true);
+  };
+
+  // Handle Add/Update Item in Calculator
+  const handleAddOrUpdateItem = () => {
+    const itemData = isCustomItem ? {
+      en: customItemName,
+      hi: customItemNameHi,
+      mr: customItemNameMr,
+      id: -1
+    } : calculatorItem;
+
+    const quantityData = calculatorMode === 'packet'
+      ? {
+          packets: calculatorQuantity?.packets,
+          name: `${calculatorQuantity?.packets} Packet${(calculatorQuantity?.packets || 0) > 1 ? 's' : ''}`,
+          nameHi: `${calculatorQuantity?.packets} पैकेट`,
+          nameMr: `${calculatorQuantity?.packets} पॅकेट`,
+        }
+      : {
+          grams: calculatorQuantity?.grams,
+          ml: calculatorQuantity?.ml,
+          name: calculatorQuantity?.name,
+          nameHi: calculatorQuantity?.nameHi,
+          nameMr: calculatorQuantity?.nameMr,
+        };
+
+    if (editingItem) {
+      const updatedItems = [...currentList!.items];
+      const index = updatedItems.findIndex(i => i.id === editingItem.id);
+      if (index !== -1) {
+        updatedItems[index] = {
+          ...editingItem,
+          mode: calculatorMode,
+          price: calculatorPrice,
+          quantity: quantityData,
+          calculatedPrices: calculateAllPrices(parseFloat(calculatorPrice), calculatorQuantity, calculatorMode, editingItem.category),
+        };
+        const updatedList = { ...currentList!, items: updatedItems };
+        setCurrentList(updatedList);
+        setShoppingLists(shoppingLists.map(l => l.id === currentList!.id ? updatedList : l));
+      }
+    } else {
+      const newItem = {
+        id: `item-${Date.now()}`,
+        itemId: itemData.id,
+        name: itemData.en || customItemName,
+        nameHi: itemData.hi || customItemNameHi,
+        nameMr: itemData.mr || customItemNameMr,
+        category: activeCategory!,
+        mode: calculatorMode,
+        quantity: quantityData,
+        price: calculatorPrice,
+        calculatedPrices: calculateAllPrices(parseFloat(calculatorPrice), calculatorQuantity, calculatorMode, activeCategory!),
+      };
+      const updatedList = { ...currentList!, items: [...currentList!.items, newItem] };
+      setCurrentList(updatedList);
+      setShoppingLists(shoppingLists.map(l => l.id === currentList!.id ? updatedList : l));
+    }
+    setShowCalculator(false);
+    setEditingItem(null);
+    setCalculatorItem(null);
+    setCalculatorPrice('');
+    setCalculatorQuantity(null);
+    setCalculatorMode('weight');
+    setIsCustomItem(false);
+    setCustomItemName('');
+    setCustomItemNameHi('');
+    setCustomItemNameMr('');
   };
 
   return (
@@ -463,18 +627,31 @@ export default function SabjiRateApp() {
                     <ArrowLeft className="w-4 h-4" />
                   </Button>
                 </div>
-                <h2 className="text-2xl font-bold mb-6 text-slate-900 dark:text-white">
-                  {activeCategory === Category.VEG_FRUITS && '🥬🍎 Fruits & Vegetables'}
-                  {activeCategory === Category.KIRANA && '🧺 Kirana / Grocery'}
-                </h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                  Select a subcategory
-                </p>
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                      {activeCategory === Category.VEG_FRUITS && '🥬🍎 Fruits & Vegetables'}
+                      {activeCategory === Category.KIRANA && '🧺 Kirana / Grocery'}
+                    </h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                      Select a subcategory
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openCalculator(true)}
+                    className="border-slate-300 text-slate-600 hover:bg-slate-200 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Custom Item
+                  </Button>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {activeCategory === Category.VEG_FRUITS && CATEGORY_INFO[Category.VEG_FRUITS].subcategories.map((sub) => (
                     <Card
                       key={sub.key}
-                      onClick={() => { setActiveSubCategory(sub.key); setSelectedItems(new Set()); setSearchQuery(''); }}
+                      onClick={() => { setActiveSubCategory(sub.key); setSearchQuery(''); }}
                       className="cursor-pointer transition-all hover:scale-105 bg-slate-100 border-slate-200 hover:border-lime-500 dark:bg-slate-800/50 dark:border-slate-700 dark:hover:border-lime-500"
                     >
                       <CardContent className="p-6">
@@ -488,7 +665,7 @@ export default function SabjiRateApp() {
                   {activeCategory === Category.KIRANA && CATEGORY_INFO[Category.KIRANA].subcategories.map((sub) => (
                     <Card
                       key={sub.key}
-                      onClick={() => { setActiveSubCategory(sub.key); setSelectedItems(new Set()); setSearchQuery(''); }}
+                      onClick={() => { setActiveSubCategory(sub.key); setSearchQuery(''); }}
                       className="cursor-pointer transition-all hover:scale-105 bg-slate-100 border-slate-200 hover:border-lime-500 dark:bg-slate-800/50 dark:border-slate-700 dark:hover:border-lime-500"
                     >
                       <CardContent className="p-6">
@@ -509,7 +686,7 @@ export default function SabjiRateApp() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => { setActiveSubCategory(null); setSelectedItems(new Set()); setSearchQuery(''); }}
+                      onClick={() => { setActiveSubCategory(null); setSearchQuery(''); }}
                       className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
                     >
                       <ArrowLeft className="w-4 h-4 mr-2" />
@@ -534,15 +711,26 @@ export default function SabjiRateApp() {
                   </p>
                 </div>
 
-                <div className="mb-4 relative text-slate-900 dark:text-white">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-                  <Input
-                    type="text"
-                    placeholder="Search items..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:placeholder:text-slate-500"
-                  />
+                <div className="flex gap-3 mb-4">
+                  <div className="flex-1 relative text-slate-900 dark:text-white">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <Input
+                      type="text"
+                      placeholder="Search items..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:placeholder:text-slate-500"
+                    />
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="default"
+                    onClick={() => openCalculator(true)}
+                    className="border-slate-300 text-slate-600 hover:bg-slate-200 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Custom Item
+                  </Button>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -611,24 +799,41 @@ export default function SabjiRateApp() {
                         <p className="font-semibold text-slate-900 dark:text-white">{item.name}</p>
                         <p className="text-sm text-slate-600 dark:text-slate-300">{item.nameHi} | {item.nameMr}</p>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => { setEditingItem(item); openCalculator(); }}
-                        className="border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300"
-                      >
-                        {item.price ? 'Edit Price' : 'Add Price'}
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => { setEditingItem(item); openCalculator(); }}
+                          className="border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300"
+                        >
+                          {item.price ? 'Edit Price' : 'Add Price'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => {
+                            const updatedList = { ...currentList!, items: currentList!.items.filter(i => i.id !== item.id) };
+                            setCurrentList(updatedList);
+                            setShoppingLists(shoppingLists.map(l => l.id === currentList!.id ? updatedList : l));
+                          }}
+                          className="border-red-300 text-red-600 dark:border-red-600 dark:text-red-300"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
 
                     {item.price && item.quantity && (
                       <div className="p-3 rounded-lg bg-slate-200 dark:bg-slate-900/50">
                         <div className="flex justify-between items-center mb-2">
                           <span className="text-sm text-slate-600 dark:text-slate-300">
-                            Base: {item.quantity.name} @ ₹{item.price}
+                            Base: {item.quantity.name} @ ₹{item.price} {item.mode === 'packet' ? `(${item.mode})` : ''}
                           </span>
                           <span className="text-lg font-bold text-lime-500">
-                            1 {activeCategory === Category.DAIRY && item.quantity.ml === 1000 ? 'Liter' : 'KG'} = ₹{((parseFloat(item.price) / ((item.quantity.grams || item.quantity.ml) / 1000))).toFixed(2)}
+                            {item.mode === 'packet'
+                              ? `1 Packet = ₹${item.price}`
+                              : `1 ${item.category === Category.DAIRY && item.quantity.ml === 1000 ? 'Liter' : 'KG'} = ₹${((parseFloat(item.price) / ((item.quantity.grams || item.quantity.ml) / 1000))).toFixed(2)}`
+                            }
                           </span>
                         </div>
 
@@ -716,19 +921,6 @@ export default function SabjiRateApp() {
                           <p className="text-sm text-slate-500 dark:text-slate-400">
                             {list.items.length} items • Created {new Date(list.createdAt).toLocaleDateString()}
                           </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge className="bg-slate-200 text-slate-900 dark:bg-slate-700 dark:text-white">
-                            {list.category}
-                          </Badge>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => { setShowDeleteConfirm(true); setListToDelete(list.id); }}
-                            className="ml-2"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
                         </div>
                       </div>
                     </CardContent>
@@ -852,9 +1044,9 @@ export default function SabjiRateApp() {
             <div className="flex items-center justify-between">
               <div>
                 <DialogTitle className="text-xl text-slate-900 dark:text-white">
-                  {calculatorItem ? calculatorItem.en : 'Price Calculator'}
+                  {editingItem ? editingItem.name : (isCustomItem ? 'Custom Item' : (calculatorItem ? calculatorItem.en : 'Price Calculator'))}
                 </DialogTitle>
-                {calculatorItem && (
+                {(calculatorItem && !isCustomItem) && (
                   <p className="text-sm mt-1 text-slate-500 dark:text-slate-400">
                     {calculatorItem.hi} | {calculatorItem.mr}
                   </p>
@@ -873,43 +1065,184 @@ export default function SabjiRateApp() {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            <div className="space-y-3">
-              <Label className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                Select quantity
-              </Label>
-              <select
-                value={String(calculatorQuantity?.grams !== undefined ? calculatorQuantity.grams : calculatorQuantity?.ml !== undefined ? calculatorQuantity.ml : '')}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  const allQuantities = activeCategory === Category.DAIRY ? DAIRY_QUANTITIES : INDIAN_WEIGHTS;
-                  const quantity = allQuantities.find(q => String(q.grams || q.ml) === value);
-                  setCalculatorQuantity(quantity);
-                }}
-                className="w-full px-4 py-3 rounded-md border bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+            {/* Mode Toggle */}
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant={calculatorMode === 'weight' ? 'default' : 'outline'}
+                onClick={() => { setCalculatorMode('weight'); setCalculatorQuantity(null); }}
+                className={calculatorMode === 'weight' ? 'bg-lime-500 hover:bg-lime-600 text-black' : 'border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300'}
               >
-                <option value="">Select quantity</option>
-                {(activeCategory === Category.DAIRY ? DAIRY_QUANTITIES : INDIAN_WEIGHTS).map((q, idx) => (
-                  <option key={idx} value={String(q.grams || q.ml)}>
-                    {q.name} ({q.nameHi} / {q.nameMr}) - {q.grams ? `${q.grams}g` : `${q.ml}ml`}
-                  </option>
-                ))}
-              </select>
-              <Input
-                type="number"
-                placeholder="Enter price (₹)"
-                value={calculatorPrice}
-                onChange={(e) => setCalculatorPrice(e.target.value)}
-                className="w-full px-4 py-3 bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:placeholder:text-slate-500"
-              />
+                ⚖️ Weight (Kg/g)
+              </Button>
+              <Button
+                type="button"
+                variant={calculatorMode === 'packet' ? 'default' : 'outline'}
+                onClick={() => { setCalculatorMode('packet'); setCalculatorQuantity(null); }}
+                className={calculatorMode === 'packet' ? 'bg-lime-500 hover:bg-lime-600 text-black' : 'border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300'}
+              >
+                📦 Packet
+              </Button>
             </div>
+
+            {/* Custom Item Toggle */}
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant={isCustomItem ? 'default' : 'outline'}
+                onClick={() => {
+                  setIsCustomItem(!isCustomItem);
+                  setCalculatorItem(null);
+                  setCalculatorQuantity(null);
+                }}
+                className={isCustomItem ? 'bg-lime-500 hover:bg-lime-600 text-black' : 'border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300'}
+              >
+                {isCustomItem ? '✓ Custom Item' : '+ Add Custom Item'}
+              </Button>
+            </div>
+
+            {/* Custom Item Name Inputs */}
+            {isCustomItem && (
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                    Item Name (English)
+                  </Label>
+                  <Input
+                    type="text"
+                    placeholder="Enter item name"
+                    value={editingItem && !calculatorItem ? editingItem.name : customItemName}
+                    onChange={(e) => setCustomItemName(e.target.value)}
+                    className="w-full px-4 py-3 bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:placeholder:text-slate-500"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                      Name (Hindi)
+                    </Label>
+                    <Input
+                      type="text"
+                      placeholder="हिंदी में नाम"
+                      value={editingItem && !calculatorItem ? editingItem.nameHi : customItemNameHi}
+                      onChange={(e) => setCustomItemNameHi(e.target.value)}
+                      className="w-full px-4 py-3 bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:placeholder:text-slate-500"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                      Name (Marathi)
+                    </Label>
+                    <Input
+                      type="text"
+                      placeholder="मराठीत नाव"
+                      value={editingItem && !calculatorItem ? editingItem.nameMr : customItemNameMr}
+                      onChange={(e) => setCustomItemNameMr(e.target.value)}
+                      className="w-full px-4 py-3 bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:placeholder:text-slate-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Quantity Selection for Non-Custom Items */}
+            {!isCustomItem && (
+              <div className="space-y-3">
+                <Label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                  Select quantity ({calculatorMode === 'weight' ? 'weight' : 'packet count'})
+                </Label>
+                <select
+                  value={calculatorMode === 'weight'
+                    ? String(calculatorQuantity?.grams !== undefined ? calculatorQuantity.grams : calculatorQuantity?.ml !== undefined ? calculatorQuantity.ml : '')
+                    : String(calculatorQuantity?.packets !== undefined ? calculatorQuantity.packets : '')}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    const quantities = calculatorMode === 'packet' ? PACKET_QUANTITIES : (activeCategory === Category.DAIRY ? DAIRY_QUANTITIES : INDIAN_WEIGHTS);
+                    const quantity = quantities.find(q => String(calculatorMode === 'packet' ? q.packets : (q.grams || q.ml)) === value);
+                    setCalculatorQuantity(quantity);
+                  }}
+                  className="w-full px-4 py-3 rounded-md border bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                >
+                  <option value="">Select {calculatorMode === 'weight' ? 'quantity' : 'packet count'}</option>
+                  {(calculatorMode === 'packet' ? PACKET_QUANTITIES : (activeCategory === Category.DAIRY ? DAIRY_QUANTITIES : INDIAN_WEIGHTS)).map((q, idx) => (
+                    <option key={idx} value={String(calculatorMode === 'packet' ? q.packets : (q.grams || q.ml))}>
+                      {q.name} ({q.nameHi} / {q.nameMr}) {calculatorMode === 'weight' ? `- ${q.grams ? `${q.grams}g` : `${q.ml}ml`}` : ''}
+                    </option>
+                  ))}
+                </select>
+                <Input
+                  type="number"
+                  placeholder="Enter price (₹)"
+                  value={calculatorPrice}
+                  onChange={(e) => setCalculatorPrice(e.target.value)}
+                  className="w-full px-4 py-3 bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:placeholder:text-slate-500"
+                />
+              </div>
+            )}
+
+            {/* Quantity Selection for Custom Items */}
+            {isCustomItem && (
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={calculatorMode === 'weight' ? 'default' : 'outline'}
+                    onClick={() => { setCalculatorMode('weight'); setCalculatorQuantity(null); }}
+                    className={calculatorMode === 'weight' ? 'bg-lime-500 hover:bg-lime-600 text-black' : 'border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300'}
+                  >
+                    ⚖️ Weight (Kg/g)
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={calculatorMode === 'packet' ? 'default' : 'outline'}
+                    onClick={() => { setCalculatorMode('packet'); setCalculatorQuantity(null); }}
+                    className={calculatorMode === 'packet' ? 'bg-lime-500 hover:bg-lime-600 text-black' : 'border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300'}
+                  >
+                    📦 Packet
+                  </Button>
+                </div>
+                <Label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                  Select quantity ({calculatorMode === 'weight' ? 'weight' : 'packet count'})
+                </Label>
+                <select
+                  value={calculatorMode === 'weight'
+                    ? String(calculatorQuantity?.grams !== undefined ? calculatorQuantity.grams : calculatorQuantity?.ml !== undefined ? calculatorQuantity.ml : '')
+                    : String(calculatorQuantity?.packets !== undefined ? calculatorQuantity.packets : '')}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    const quantities = calculatorMode === 'packet' ? PACKET_QUANTITIES : (activeCategory === Category.DAIRY ? DAIRY_QUANTITIES : INDIAN_WEIGHTS);
+                    const quantity = quantities.find(q => String(calculatorMode === 'packet' ? q.packets : (q.grams || q.ml)) === value);
+                    setCalculatorQuantity(quantity);
+                  }}
+                  className="w-full px-4 py-3 rounded-md border bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                >
+                  <option value="">Select {calculatorMode === 'weight' ? 'quantity' : 'packet count'}</option>
+                  {(calculatorMode === 'packet' ? PACKET_QUANTITIES : (activeCategory === Category.DAIRY ? DAIRY_QUANTITIES : INDIAN_WEIGHTS)).map((q, idx) => (
+                    <option key={idx} value={String(calculatorMode === 'packet' ? q.packets : (q.grams || q.ml))}>
+                      {q.name} ({q.nameHi} / {q.nameMr}) {calculatorMode === 'weight' ? `- ${q.grams ? `${q.grams}g` : `${q.ml}ml`}` : ''}
+                    </option>
+                  ))}
+                </select>
+                <Label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                  Enter price (₹)
+                </Label>
+                <Input
+                  type="number"
+                  placeholder="Enter price (₹)"
+                  value={calculatorPrice}
+                  onChange={(e) => setCalculatorPrice(e.target.value)}
+                  className="w-full px-4 py-3 bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:placeholder:text-slate-500"
+                />
+              </div>
+            )}
 
             {calculatorPrice && calculatorQuantity && (
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                  Price for all quantities:
+                  Price for all {calculatorMode === 'packet' ? 'packet quantities' : 'quantities'}:
                 </Label>
                 <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {calculateAllPrices(parseFloat(calculatorPrice), calculatorQuantity).map((q, idx) => (
+                  {calculateAllPrices(parseFloat(calculatorPrice), calculatorQuantity, calculatorMode).map((q, idx) => (
                     <div key={idx} className="p-3 rounded-md border bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700">
                       <div className="flex items-center justify-between">
                         <div>
@@ -917,7 +1250,7 @@ export default function SabjiRateApp() {
                             {q.weight}
                           </p>
                           <p className="text-xs text-slate-500 dark:text-slate-400">
-                            {q.nameHi} / {q.nameMr} - {q.grams ? `${q.grams}g` : `${q.ml}ml`}
+                            {q.nameHi} / {q.nameMr} {calculatorMode === 'weight' && (q.grams ? `- ${q.grams}g` : `- ${q.ml}ml`)}
                           </p>
                         </div>
                         <div className="text-right">
@@ -944,106 +1277,8 @@ export default function SabjiRateApp() {
             </Button>
             {calculatorPrice && calculatorQuantity && (
               <Button
-                onClick={() => {
-                  if (editingItem) {
-                    const updatedItems = [...currentList!.items];
-                    const index = updatedItems.findIndex(i => i.id === editingItem.id);
-                    if (index !== -1) {
-                      updatedItems[index] = {
-                        ...editingItem,
-                        price: calculatorPrice,
-                        quantity: {
-                          grams: calculatorQuantity.grams,
-                          ml: calculatorQuantity.ml,
-                          name: calculatorQuantity.name,
-                          nameHi: calculatorQuantity.nameHi,
-                          nameMr: calculatorQuantity.nameMr,
-                        },
-                        calculatedPrices: calculateAllPrices(parseFloat(calculatorPrice), calculatorQuantity),
-                      };
-                      const updatedList = { ...currentList!, items: updatedItems };
-                      setCurrentList(updatedList);
-                      setShoppingLists(shoppingLists.map(l => l.id === currentList!.id ? updatedList : l));
-                    } else {
-                      const newItem = {
-                        id: `item-${Date.now()}`,
-                        itemId: calculatorItem.id,
-                        name: calculatorItem.en,
-                        nameHi: calculatorItem.hi,
-                        nameMr: calculatorItem.mr,
-                        category: activeCategory!,
-                        quantity: {
-                          grams: calculatorQuantity.grams,
-                          ml: calculatorQuantity.ml,
-                          name: calculatorQuantity.name,
-                          nameHi: calculatorQuantity.nameHi,
-                          nameMr: calculatorQuantity.nameMr,
-                        },
-                        price: calculatorPrice,
-                        calculatedPrices: calculateAllPrices(parseFloat(calculatorPrice), calculatorQuantity),
-                      };
-                      const updatedList = { ...currentList!, items: [...currentList!.items, newItem] };
-                      setCurrentList(updatedList);
-                      setShoppingLists(shoppingLists.map(l => l.id === currentList!.id ? updatedList : l));
-                    }
-                    setShowCalculator(false);
-                    setEditingItem(null);
-                    setCalculatorItem(null);
-                    setCalculatorPrice('');
-                    setCalculatorQuantity(null);
-                  }}
-                  <Button
-                onClick={() => {
-                  if (editingItem) {
-                    const updatedItems = [...currentList!.items];
-                    const index = updatedItems.findIndex(i => i.id === editingItem.id);
-                    if (index !== -1) {
-                      updatedItems[index] = {
-                        ...editingItem,
-                        price: calculatorPrice,
-                        quantity: {
-                          grams: calculatorQuantity.grams,
-                          ml: calculatorQuantity.ml,
-                          name: calculatorQuantity.name,
-                          nameHi: calculatorQuantity.nameHi,
-                          nameMr: calculatorQuantity.nameMr,
-                        },
-                        calculatedPrices: calculateAllPrices(parseFloat(calculatorPrice), calculatorQuantity),
-                      };
-                      const updatedList = { ...currentList!, items: updatedItems };
-                      setCurrentList(updatedList);
-                      setShoppingLists(shoppingLists.map(l => l.id === currentList!.id ? updatedList : l));
-                    } else {
-                      const newItem = {
-                        id: `item-${Date.now()}`,
-                        itemId: calculatorItem.id,
-                        name: calculatorItem.en,
-                        nameHi: calculatorItem.hi,
-                        nameMr: calculatorItem.mr,
-                        category: activeCategory!,
-                        quantity: {
-                          grams: calculatorQuantity.grams,
-                          ml: calculatorQuantity.ml,
-                          name: calculatorQuantity.name,
-                          nameHi: calculatorQuantity.nameHi,
-                          nameMr: calculatorQuantity.nameMr,
-                        },
-                        price: calculatorPrice,
-                        calculatedPrices: calculateAllPrices(parseFloat(calculatorPrice), calculatorQuantity),
-                      };
-                      const updatedList = { ...currentList!, items: [...currentList!.items, newItem] };
-                      setCurrentList(updatedList);
-                      setShoppingLists(shoppingLists.map(l => l.id === currentList!.id ? updatedList : l));
-                    }
-                    setShowCalculator(false);
-                    setEditingItem(null);
-                    setCalculatorItem(null);
-                    setCalculatorPrice('');
-                    setCalculatorQuantity(null);
-                  }}
-                  disabled={!calculatorPrice || !calculatorQuantity}
-                  className="bg-lime-500 hover:bg-lime-600 text-black font-medium"
-                >
+                onClick={handleAddOrUpdateItem}
+                disabled={!calculatorPrice || !calculatorQuantity} className="bg-lime-500 hover:bg-lime-600 text-black font-medium">
                   {editingItem ? 'Update Item' : 'Add to List'}
                 </Button>
             )}
@@ -1079,9 +1314,9 @@ export default function SabjiRateApp() {
                 onClick={() => {
                   if (listToDelete) {
                     // Move current list to deleted history
-                    const listToDelete = shoppingLists.find(l => l.id === listToDelete);
-                    if (listToDelete) {
-                      const deletedList = { ...listToDelete, id: `deleted-${Date.now()}` };
+                    const listToRemove = shoppingLists.find(l => l.id === listToDelete);
+                    if (listToRemove) {
+                      const deletedList = { ...listToRemove, id: `deleted-${Date.now()}` };
                       setDeletedLists([deletedList, ...deletedLists]);
                       setShoppingLists(shoppingLists.filter(l => l.id !== listToDelete));
                     }
@@ -1102,12 +1337,6 @@ export default function SabjiRateApp() {
         </DialogContent>
       </Dialog>
 
-      {/* Open Calculator Helper */}
-      const openCalculator = () => {
-        if (activeSubCategory && selectedItems.size === 1) {
-          const selectedItem = getFilteredItems().find((item: any) => selectedItems.has(Array.from(selectedItems)[0]));
-          setCalculatorItem(selectedItem);
-        }
-        setShowCalculator(true);
-      };
+    </div>
+  );
 }
