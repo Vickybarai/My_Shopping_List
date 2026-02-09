@@ -178,6 +178,12 @@ export default function SabjiRateApp() {
   const [calculatorQuantity, setCalculatorQuantity] = useState<any>(null);
   const [calculatorDozen, setCalculatorDozen] = useState<number>(1);
   const [calculatorMode, setCalculatorMode] = useState<'weight' | 'packet' | 'dozen'>('weight');
+
+  // Custom item state
+  const [customItemCategory, setCustomItemCategory] = useState<Category>(Category.VEG_FRUITS);
+  const [customItemName, setCustomItemName] = useState('');
+  const [customItemNameHi, setCustomItemNameHi] = useState('');
+  const [customItemNameMr, setCustomItemNameMr] = useState('');
   
   // List management state
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
@@ -567,14 +573,14 @@ export default function SabjiRateApp() {
       const newItem = {
         id: `item-${Date.now()}`,
         itemId: calculatorItem?.id || -1,
-        name: calculatorItem?.en || 'Custom Item',
-        nameHi: calculatorItem?.hi || 'कस्टम आइटम',
-        nameMr: calculatorItem?.mr || 'कस्टम आयटम',
-        category: activeCategory!,
+        name: calculatorItem?.en || customItemName || 'Custom Item',
+        nameHi: calculatorItem?.hi || customItemNameHi || 'कस्टम आइटम',
+        nameMr: calculatorItem?.mr || customItemNameMr || 'कस्टम आयटम',
+        category: calculatorItem ? activeCategory! : customItemCategory,
         mode: calculatorMode,
         quantity: quantityData,
         price: calculatorPrice,
-        calculatedPrices: calculateAllPrices(parseFloat(calculatorPrice), calculatorMode === 'dozen' ? calculatorDozen : calculatorQuantity, calculatorMode, activeCategory!),
+        calculatedPrices: calculateAllPrices(parseFloat(calculatorPrice), calculatorMode === 'dozen' ? calculatorDozen : calculatorQuantity, calculatorMode, calculatorItem ? activeCategory! : customItemCategory),
       };
       const updatedList = { ...currentList!, items: [...currentList!.items, newItem] };
       setCurrentList(updatedList);
@@ -587,6 +593,10 @@ export default function SabjiRateApp() {
     setCalculatorQuantity(null);
     setCalculatorDozen(1);
     setCalculatorMode('weight');
+    setCustomItemName('');
+    setCustomItemNameHi('');
+    setCustomItemNameMr('');
+    setCustomItemCategory(Category.VEG_FRUITS);
   };
 
   return (
@@ -1065,7 +1075,7 @@ export default function SabjiRateApp() {
             <div className="flex items-center justify-between">
               <div>
                 <DialogTitle className="text-xl text-slate-900 dark:text-white">
-                  {calculatorItem ? calculatorItem.en : 'Price Calculator'}
+                  {calculatorItem ? calculatorItem.en : 'Custom Item'}
                 </DialogTitle>
                 {calculatorItem && (
                   <p className="text-sm mt-1 text-slate-500 dark:text-slate-400">
@@ -1086,9 +1096,88 @@ export default function SabjiRateApp() {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
+            {/* Custom Item Form - Only show when no calculatorItem selected */}
+            {!calculatorItem && (
+              <div className="space-y-4 p-4 rounded-lg bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-700">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+                  Add Custom Item
+                </h3>
+
+                {/* Category Selection */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                    Select Category
+                  </Label>
+                  <select
+                    value={customItemCategory}
+                    onChange={(e) => {
+                      setCustomItemCategory(e.target.value as Category);
+                      // Update calculator mode based on category
+                      if (e.target.value === Category.VEG_FRUITS) {
+                        setCalculatorMode('dozen');
+                        setCalculatorDozen(1);
+                      } else if (e.target.value === Category.DAIRY) {
+                        setCalculatorMode('weight');
+                      } else {
+                        setCalculatorMode('weight');
+                      }
+                    }}
+                    className="w-full px-4 py-3 rounded-md border bg-white border-slate-300 text-slate-900 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                  >
+                    <option value={Category.VEG_FRUITS}>🍎 Fruits (Vegetables & Fruits)</option>
+                    <option value={Category.VEG_SABJI}>🥬 Vegetables</option>
+                    <option value={Category.DAIRY}>🥛 Milk & Dairy</option>
+                    <option value={Category.KIRANA}>🧺 Kirana / Groceries</option>
+                  </select>
+                </div>
+
+                {/* Item Name (English) */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                    Item Name (English)
+                  </Label>
+                  <Input
+                    type="text"
+                    placeholder="Enter item name (e.g., Apple)"
+                    value={customItemName}
+                    onChange={(e) => setCustomItemName(e.target.value)}
+                    className="w-full px-4 py-3 bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:placeholder:text-slate-500"
+                  />
+                </div>
+
+                {/* Item Name (Hindi) */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                    Item Name (Hindi)
+                  </Label>
+                  <Input
+                    type="text"
+                    placeholder="आइटम का नाम (जैसे सेब)"
+                    value={customItemNameHi}
+                    onChange={(e) => setCustomItemNameHi(e.target.value)}
+                    className="w-full px-4 py-3 bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:placeholder:text-slate-500"
+                  />
+                </div>
+
+                {/* Item Name (Marathi) */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                    Item Name (Marathi)
+                  </Label>
+                  <Input
+                    type="text"
+                    placeholder="आयटमचे नाव (उदा. सफरचंद)"
+                    value={customItemNameMr}
+                    onChange={(e) => setCustomItemNameMr(e.target.value)}
+                    className="w-full px-4 py-3 bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:placeholder:text-slate-500"
+                  />
+                </div>
+              </div>
+            )}
+
             {/* Mode Toggle - Context Aware */}
             <div className="flex gap-2">
-              {activeCategory === Category.VEG_FRUITS ? (
+              {(calculatorItem ? activeCategory : customItemCategory) === Category.VEG_FRUITS ? (
                 <>
                   <Button
                     type="button"
@@ -1115,7 +1204,7 @@ export default function SabjiRateApp() {
                     📦 Packet
                   </Button>
                 </>
-              ) : activeCategory === Category.DAIRY ? (
+              ) : (calculatorItem ? activeCategory : customItemCategory) === Category.DAIRY ? (
                 <>
                   <Button
                     type="button"
@@ -1178,7 +1267,7 @@ export default function SabjiRateApp() {
               ) : (
                 <>
                   <Label className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                    Select quantity ({calculatorMode === 'weight' ? (activeCategory === Category.DAIRY ? 'liter' : 'weight') : 'packet count'})
+                    Select quantity ({calculatorMode === 'weight' ? ((calculatorItem ? activeCategory : customItemCategory) === Category.DAIRY ? 'liter' : 'weight') : 'packet count'})
                   </Label>
                   <select
                     value={calculatorMode === 'weight'
@@ -1186,14 +1275,14 @@ export default function SabjiRateApp() {
                       : String(calculatorQuantity?.packets !== undefined ? calculatorQuantity.packets : '')}
                     onChange={(e) => {
                       const value = e.target.value;
-                      const quantities = calculatorMode === 'packet' ? PACKET_QUANTITIES : (activeCategory === Category.DAIRY ? DAIRY_QUANTITIES : INDIAN_WEIGHTS);
+                      const quantities = calculatorMode === 'packet' ? PACKET_QUANTITIES : ((calculatorItem ? activeCategory : customItemCategory) === Category.DAIRY ? DAIRY_QUANTITIES : INDIAN_WEIGHTS);
                       const quantity = quantities.find(q => String(calculatorMode === 'packet' ? q.packets : (q.grams || q.ml)) === value);
                       setCalculatorQuantity(quantity);
                     }}
                     className="w-full px-4 py-3 rounded-md border bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                   >
-                    <option value="">Select {calculatorMode === 'weight' ? (activeCategory === Category.DAIRY ? 'liter' : 'quantity') : 'packet count'}</option>
-                    {(calculatorMode === 'packet' ? PACKET_QUANTITIES : (activeCategory === Category.DAIRY ? DAIRY_QUANTITIES : INDIAN_WEIGHTS)).map((q, idx) => (
+                    <option value="">Select {calculatorMode === 'weight' ? ((calculatorItem ? activeCategory : customItemCategory) === Category.DAIRY ? 'liter' : 'quantity') : 'packet count'}</option>
+                    {(calculatorMode === 'packet' ? PACKET_QUANTITIES : ((calculatorItem ? activeCategory : customItemCategory) === Category.DAIRY ? DAIRY_QUANTITIES : INDIAN_WEIGHTS)).map((q, idx) => (
                       <option key={idx} value={String(calculatorMode === 'packet' ? q.packets : (q.grams || q.ml))}>
                         {q.name} ({q.nameHi} / {q.nameMr}) {calculatorMode === 'weight' ? `- ${q.grams ? `${q.grams}g` : `${q.ml}ml`}` : ''}
                       </option>
@@ -1213,7 +1302,7 @@ export default function SabjiRateApp() {
             {calculatorPrice && (calculatorMode === 'dozen' || calculatorQuantity) && (
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                  {calculatorMode === 'dozen' ? 'Price for all dozen quantities:' : calculatorMode === 'packet' ? 'Price for all packet quantities:' : activeCategory === Category.DAIRY ? 'Price for all liter quantities:' : 'Price for all quantities:'}
+                  {calculatorMode === 'dozen' ? 'Price for all dozen quantities:' : calculatorMode === 'packet' ? 'Price for all packet quantities:' : (calculatorItem ? activeCategory : customItemCategory) === Category.DAIRY ? 'Price for all liter quantities:' : 'Price for all quantities:'}
                 </Label>
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {calculateAllPrices(parseFloat(calculatorPrice), calculatorQuantity, calculatorMode).map((q, idx) => (
@@ -1252,7 +1341,7 @@ export default function SabjiRateApp() {
             {calculatorPrice && (calculatorMode === 'dozen' || calculatorQuantity) && (
               <Button
                 onClick={handleAddOrUpdateItem}
-                disabled={!calculatorPrice || (calculatorMode !== 'dozen' && !calculatorQuantity)} className="bg-lime-500 hover:bg-lime-600 text-black font-medium">
+                disabled={!calculatorPrice || (calculatorMode !== 'dozen' && !calculatorQuantity) || (!calculatorItem && (!customItemName || !customItemNameHi || !customItemNameMr))} className="bg-lime-500 hover:bg-lime-600 text-black font-medium">
                   {editingItem ? 'Update Item' : 'Add to List'}
                 </Button>
             )}
