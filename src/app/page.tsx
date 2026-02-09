@@ -475,37 +475,17 @@ export default function SabjiRateApp() {
   const openCalculator = (forceCustom: boolean = false) => {
     if (editingItem) {
       // Load existing item data when editing
-      const isEditingCustomItem = editingItem.itemId === -1;
+      setCalculatorItem(editingItem);
+      setCalculatorPrice(editingItem.price);
 
-      if (isEditingCustomItem || forceCustom) {
-        // Editing custom item or forcing custom mode - show custom form
-        setCalculatorItem(editingItem);
-        setCalculatorPrice(editingItem.price);
-        setCalculatorQuantity(editingItem.quantity);
-        setCalculatorMode(editingItem.mode || 'weight');
-        setIsCustomItem(true);
-        // Set custom item names from the editing item
-        setCustomItemName(editingItem.name);
-        setCustomItemNameHi(editingItem.nameHi);
-        setCustomItemNameMr(editingItem.nameMr);
+      // For fruits, default to dozen mode
+      if (activeCategory === Category.VEG_FRUITS && !editingItem.mode) {
+        setCalculatorMode('dozen');
+        setCalculatorDozen(1);
+        setCalculatorQuantity(DOZEN_QUANTITIES[1]);
       } else {
-        // Editing regular item - hide custom form, show normal quantity selection
-        setCalculatorItem(editingItem);
-        setCalculatorPrice(editingItem.price);
+        setCalculatorMode(editingItem.mode || 'weight');
         setCalculatorQuantity(editingItem.quantity);
-        // For fruits, default to dozen mode
-        if (activeCategory === Category.VEG_FRUITS && !editingItem.mode) {
-          setCalculatorMode('dozen');
-          setCalculatorDozen(1);
-          setCalculatorQuantity(DOZEN_QUANTITIES[1]);
-        } else {
-          setCalculatorMode(editingItem.mode || 'weight');
-          setCalculatorQuantity(editingItem.quantity);
-        }
-        setIsCustomItem(false);
-        setCustomItemName('');
-        setCustomItemNameHi('');
-        setCustomItemNameMr('');
       }
     } else if (activeSubCategory && selectedItems.size === 1) {
       // Load selected item for new addition
@@ -521,22 +501,14 @@ export default function SabjiRateApp() {
         setCalculatorMode('weight');
         setCalculatorQuantity(null);
       }
-      setIsCustomItem(false);
-      setCustomItemName('');
-      setCustomItemNameHi('');
-      setCustomItemNameMr('');
     } else {
-      // For new custom items or when no item selected
+      // When no item selected
       setCalculatorItem(null);
       setCalculatorPrice('');
       setCalculatorQuantity(null);
       setCalculatorDozen(1);
       // For fruits, default to dozen mode
       setCalculatorMode(activeCategory === Category.VEG_FRUITS ? 'dozen' : 'weight');
-      setIsCustomItem(true);
-      setCustomItemName('');
-      setCustomItemNameHi('');
-      setCustomItemNameMr('');
     }
     setShowCalculator(true);
   };
@@ -584,9 +556,9 @@ export default function SabjiRateApp() {
       const newItem = {
         id: `item-${Date.now()}`,
         itemId: calculatorItem?.id || -1,
-        name: calculatorItem?.en || customItemName,
-        nameHi: calculatorItem?.hi || customItemNameHi,
-        nameMr: calculatorItem?.mr || customItemNameMr,
+        name: calculatorItem?.en || 'Custom Item',
+        nameHi: calculatorItem?.hi || 'कस्टम आइटम',
+        nameMr: calculatorItem?.mr || 'कस्टम आयटम',
         category: activeCategory!,
         mode: calculatorMode,
         quantity: quantityData,
@@ -604,10 +576,6 @@ export default function SabjiRateApp() {
     setCalculatorQuantity(null);
     setCalculatorDozen(1);
     setCalculatorMode('weight');
-    setIsCustomItem(false);
-    setCustomItemName('');
-    setCustomItemNameHi('');
-    setCustomItemNameMr('');
   };
 
   return (
