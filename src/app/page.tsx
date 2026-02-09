@@ -1106,6 +1106,14 @@ export default function SabjiRateApp() {
                   >
                     ⚖️ Weight
                   </Button>
+                  <Button
+                    type="button"
+                    variant={calculatorMode === 'packet' ? 'default' : 'outline'}
+                    onClick={() => { setCalculatorMode('packet'); setCalculatorQuantity(null); }}
+                    className={calculatorMode === 'packet' ? 'bg-lime-500 hover:bg-lime-600 text-black' : 'border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300'}
+                  >
+                    📦 Packet
+                  </Button>
                 </>
               ) : (
                 <>
