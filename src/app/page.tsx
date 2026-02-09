@@ -464,9 +464,13 @@ export default function SabjiRateApp() {
     currentList.items.forEach(item => {
       if (item.price && item.quantity) {
         const price = parseFloat(item.price);
-        // For packet mode, add price directly (per packet), for weight mode convert to 1KG price
+        // For packet mode, calculate total price (per packet × number of packets), for weight mode convert to 1KG price
         if (item.mode === 'packet') {
-          total += price;
+          total += price * (item.quantity.packets || 1);
+        } else if (item.mode === 'dozen') {
+          // For dozen mode, convert to 1KG equivalent for consistent comparison
+          const pricePerDozen = (price / item.quantity.dozens);
+          total += pricePerDozen;
         } else {
           const quantityGrams = item.quantity.grams || item.quantity.ml || 1;
           const pricePerKg = (price / (quantityGrams / 1000));
@@ -856,11 +860,11 @@ export default function SabjiRateApp() {
                       <div className="p-3 rounded-lg bg-slate-200 dark:bg-slate-900/50">
                         <div className="flex justify-between items-center mb-2">
                           <span className="text-sm text-slate-600 dark:text-slate-300">
-                            Base: {item.quantity.name} @ ₹{item.price} {item.mode === 'packet' ? `(${item.mode})` : item.mode === 'dozen' ? `(${item.quantity.count} pieces)` : ''}
+                            Base: {item.quantity.name} @ ₹{item.price} {item.mode === 'packet' ? `/packet` : item.mode === 'dozen' ? `(${item.quantity.count} pieces)` : ''}
                           </span>
                           <span className="text-lg font-bold text-lime-500">
                             {item.mode === 'packet'
-                              ? `${item.quantity.packets} Packet${item.quantity.packets > 1 ? 's' : ''} = ₹${item.price}`
+                              ? `${item.quantity.packets} Packet${item.quantity.packets > 1 ? 's' : ''} = ₹${(parseFloat(item.price) * item.quantity.packets).toFixed(2)}`
                               : item.mode === 'dozen'
                               ? `1 Dozen = ₹${((parseFloat(item.price) / item.quantity.dozens)).toFixed(2)} (₹${((parseFloat(item.price) / item.quantity.count)).toFixed(2)}/piece)`
                               : `1 ${item.category === Category.DAIRY && item.quantity.ml === 1000 ? 'Liter' : 'KG'} = ₹${((parseFloat(item.price) / ((item.quantity.grams || item.quantity.ml) / 1000))).toFixed(2)}`
@@ -878,7 +882,7 @@ export default function SabjiRateApp() {
                 <div className="mt-6 p-4 rounded-lg bg-lime-100 border border-lime-300 dark:bg-lime-900/30 dark:border-lime-700">
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-semibold text-slate-900 dark:text-white">
-                      Total Cost (1 KG prices)
+                      Total Cost
                     </span>
                     <span className="text-2xl font-bold text-lime-600 dark:text-lime-400">
                       ₹{calculateTotalCost().toFixed(2)}
