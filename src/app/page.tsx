@@ -1084,9 +1084,9 @@ export default function SabjiRateApp() {
             <div className="flex items-center justify-between">
               <div>
                 <DialogTitle className="text-xl text-slate-900 dark:text-white">
-                  {editingItem ? editingItem.name : (isCustomItem ? 'Custom Item' : (calculatorItem ? calculatorItem.en : 'Price Calculator'))}
+                  {calculatorItem ? calculatorItem.en : 'Price Calculator'}
                 </DialogTitle>
-                {(calculatorItem && !isCustomItem) && (
+                {calculatorItem && (
                   <p className="text-sm mt-1 text-slate-500 dark:text-slate-400">
                     {calculatorItem.hi} | {calculatorItem.mr}
                   </p>
