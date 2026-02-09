@@ -860,14 +860,14 @@ export default function SabjiRateApp() {
                       <div className="p-3 rounded-lg bg-slate-200 dark:bg-slate-900/50">
                         <div className="flex justify-between items-center mb-2">
                           <span className="text-sm text-slate-600 dark:text-slate-300">
-                            Base: {item.quantity.name} @ ₹{item.price} {item.mode === 'packet' ? `/packet` : item.mode === 'dozen' ? `(${item.quantity.count} pieces)` : ''}
+                            Base: {item.quantity.name} @ ₹{item.price} {item.mode === 'packet' ? `/packet` : item.mode === 'dozen' ? `(${item.quantity.count} pieces)` : item.mode === 'weight' && item.category === Category.DAIRY ? `(liter)` : ''}
                           </span>
                           <span className="text-lg font-bold text-lime-500">
                             {item.mode === 'packet'
                               ? `${item.quantity.packets} Packet${item.quantity.packets > 1 ? 's' : ''} = ₹${(parseFloat(item.price) * item.quantity.packets).toFixed(2)}`
                               : item.mode === 'dozen'
                               ? `1 Dozen = ₹${((parseFloat(item.price) / item.quantity.dozens)).toFixed(2)} (₹${((parseFloat(item.price) / item.quantity.count)).toFixed(2)}/piece)`
-                              : `1 ${item.category === Category.DAIRY && item.quantity.ml === 1000 ? 'Liter' : 'KG'} = ₹${((parseFloat(item.price) / ((item.quantity.grams || item.quantity.ml) / 1000))).toFixed(2)}`
+                              : `1 ${item.category === Category.DAIRY ? 'Liter' : 'KG'} = ₹${((parseFloat(item.price) / ((item.quantity.grams || item.quantity.ml) / 1000))).toFixed(2)}`
                             }
                           </span>
                         </div>
@@ -1115,6 +1115,25 @@ export default function SabjiRateApp() {
                     📦 Packet
                   </Button>
                 </>
+              ) : activeCategory === Category.DAIRY ? (
+                <>
+                  <Button
+                    type="button"
+                    variant={calculatorMode === 'weight' ? 'default' : 'outline'}
+                    onClick={() => { setCalculatorMode('weight'); setCalculatorQuantity(null); }}
+                    className={calculatorMode === 'weight' ? 'bg-lime-500 hover:bg-lime-600 text-black' : 'border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300'}
+                  >
+                    ⚖️ Liter
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={calculatorMode === 'packet' ? 'default' : 'outline'}
+                    onClick={() => { setCalculatorMode('packet'); setCalculatorQuantity(null); }}
+                    className={calculatorMode === 'packet' ? 'bg-lime-500 hover:bg-lime-600 text-black' : 'border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300'}
+                  >
+                    📦 Packet
+                  </Button>
+                </>
               ) : (
                 <>
                   <Button
@@ -1159,7 +1178,7 @@ export default function SabjiRateApp() {
               ) : (
                 <>
                   <Label className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                    Select quantity ({calculatorMode === 'weight' ? 'weight' : 'packet count'})
+                    Select quantity ({calculatorMode === 'weight' ? (activeCategory === Category.DAIRY ? 'liter' : 'weight') : 'packet count'})
                   </Label>
                   <select
                     value={calculatorMode === 'weight'
@@ -1173,7 +1192,7 @@ export default function SabjiRateApp() {
                     }}
                     className="w-full px-4 py-3 rounded-md border bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                   >
-                    <option value="">Select {calculatorMode === 'weight' ? 'quantity' : 'packet count'}</option>
+                    <option value="">Select {calculatorMode === 'weight' ? (activeCategory === Category.DAIRY ? 'liter' : 'quantity') : 'packet count'}</option>
                     {(calculatorMode === 'packet' ? PACKET_QUANTITIES : (activeCategory === Category.DAIRY ? DAIRY_QUANTITIES : INDIAN_WEIGHTS)).map((q, idx) => (
                       <option key={idx} value={String(calculatorMode === 'packet' ? q.packets : (q.grams || q.ml))}>
                         {q.name} ({q.nameHi} / {q.nameMr}) {calculatorMode === 'weight' ? `- ${q.grams ? `${q.grams}g` : `${q.ml}ml`}` : ''}
@@ -1194,7 +1213,7 @@ export default function SabjiRateApp() {
             {calculatorPrice && (calculatorMode === 'dozen' || calculatorQuantity) && (
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                  {calculatorMode === 'dozen' ? 'Price for all dozen quantities:' : calculatorMode === 'packet' ? 'Price for all packet quantities:' : 'Price for all quantities:'}
+                  {calculatorMode === 'dozen' ? 'Price for all dozen quantities:' : calculatorMode === 'packet' ? 'Price for all packet quantities:' : activeCategory === Category.DAIRY ? 'Price for all liter quantities:' : 'Price for all quantities:'}
                 </Label>
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {calculateAllPrices(parseFloat(calculatorPrice), calculatorQuantity, calculatorMode).map((q, idx) => (
