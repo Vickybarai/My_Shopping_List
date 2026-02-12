@@ -694,7 +694,7 @@ export default function SabjiRateApp() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => { setActiveCategory(null); setActiveSubCategory(null); setSelectedItems(new Set()); setSearchQuery(''); }}
+                onClick={() => { setActiveCategory(null); setActiveSubCategory(null); setSearchQuery(''); }}
                 className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -1139,8 +1139,8 @@ export default function SabjiRateApp() {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            {/* Custom Item Name Input (when calculatorItem is null) */}
-            {!calculatorItem && (
+            {/* Custom Item Name Input (only when adding custom item via floating button, NOT when editing) */}
+            {calculatorCustomName && !editingItem && (
               <div>
                 <Label className="text-sm font-medium text-slate-700 dark:text-slate-200">
                   Item Name
