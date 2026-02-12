@@ -1419,7 +1419,7 @@ export default function SabjiRateApp() {
                 onClick={() => setShowDiscardConfirm(false)}
                 className="border-slate-400 text-slate-600 hover:bg-slate-200 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
               >
-                Cancel
+                No
               </Button>
               <Button
                 variant="destructive"
@@ -1430,7 +1430,7 @@ export default function SabjiRateApp() {
                 }}
                 className="bg-red-500 hover:bg-red-600 text-white"
               >
-                Discard & Go Back
+                Yes
               </Button>
             </div>
           </div>
