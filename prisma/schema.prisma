@@ -1,0 +1,68 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  lists     List[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model List {
+  id        String    @id @default(cuid())
+  name      String
+  type      String    @default("current") // 'current', 'history'
+  userId    String?
+  user      User?     @relation(fields: [userId], references: [id])
+  items     ListItem[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model ListItem {
+  id        String   @id @default(cuid())
+  listId    String
+  list      List     @relation(fields: [listId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product   @relation(fields: [productId], references: [id])
+  quantity  Float    // Stored as ML or Grams internally
+  price     Float
+  isChecked Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  nameEn      String
+  nameHi      String?
+  nameMr      String?
+  category    Category
+  baseUnit    BaseUnit    // 'KILOGRAM' or 'LITER'
+  items       ListItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+enum Category {
+  VEGETABLES
+  FRUITS
+  DAIRY
+  KIRANA
+}
+
+enum BaseUnit {
+  KILOGRAM  // For Veg, Kirana
+  LITER     // For Dairy Only
+}
