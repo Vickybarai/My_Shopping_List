@@ -210,6 +210,10 @@ export default function SabjiRateApp() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [listToDelete, setListToDelete] = useState<string | null>(null);
 
+  // Discard confirmation for back button
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null);
+
   // Swipe gesture state
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
 
@@ -228,6 +232,22 @@ export default function SabjiRateApp() {
       localStorage.setItem('deletedLists', JSON.stringify(deletedLists));
     }
   }, [shoppingLists, deletedLists, mounted]);
+
+  // Handle back button with discard confirmation
+  const handleBackWithDiscardCheck = (navigationAction: () => void) => {
+    if (allSelectedItems.length > 0) {
+      setPendingNavigation(() => {
+        setAllSelectedItems([]);
+        setSelectedItems(new Set());
+        setSearchQuery('');
+        navigationAction();
+        setShowDiscardConfirm(false);
+      });
+      setShowDiscardConfirm(true);
+    } else {
+      navigationAction();
+    }
+  };
 
   const categories = [
     { key: Category.VEG_FRUITS, title: '🥬🍎 Fruits & Vegetables', icon: '🥬', count: 70 },
@@ -694,7 +714,13 @@ export default function SabjiRateApp() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => { setActiveCategory(null); setActiveSubCategory(null); setSearchQuery(''); }}
+                onClick={() => handleBackWithDiscardCheck(() => {
+                  if (activeSubCategory) {
+                    setActiveSubCategory(null);
+                  } else {
+                    setActiveCategory(null);
+                  }
+                })}
                 className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -1369,6 +1395,45 @@ export default function SabjiRateApp() {
               Continue to Calculator
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Discard Confirmation Dialog */}
+      <Dialog open={showDiscardConfirm} onOpenChange={setShowDiscardConfirm}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl text-slate-900 dark:text-white">
+              Discard Selections?
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex items-center gap-3 mb-4 text-amber-600 dark:text-amber-400">
+              <AlertTriangle className="w-6 h-6" />
+              <p className="text-sm">
+                You have {allSelectedItems.length} item(s) selected. Going back will discard these selections.
+              </p>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setShowDiscardConfirm(false)}
+                className="border-slate-400 text-slate-600 hover:bg-slate-200 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  if (pendingNavigation) {
+                    pendingNavigation();
+                  }
+                }}
+                className="bg-red-500 hover:bg-red-600 text-white"
+              >
+                Discard & Go Back
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
