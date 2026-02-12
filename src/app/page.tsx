@@ -178,6 +178,7 @@ export default function SabjiRateApp() {
   const [calculatorQuantity, setCalculatorQuantity] = useState<any>(null);
   const [calculatorDozen, setCalculatorDozen] = useState<number>(1);
   const [calculatorMode, setCalculatorMode] = useState<'weight' | 'packet' | 'dozen' | 'liter'>('weight');
+  const [calculatorCustomName, setCalculatorCustomName] = useState('');
 
   // Custom Item Prompt States
   const [customItemName, setCustomItemName] = useState('');
@@ -316,10 +317,16 @@ export default function SabjiRateApp() {
       setAllSelectedItems(allSelectedItems.filter(item => item.id !== itemId));
     } else {
       newSelected.add(itemId);
-      // Add to allSelectedItems with current category
+      // Add to allSelectedItems with current category and full item data
       const itemData = getFilteredItems().find((item: any) => item.id === itemId);
       if (itemData) {
-        setAllSelectedItems([...allSelectedItems, { id: itemId, category: activeCategory! }]);
+        setAllSelectedItems([...allSelectedItems, { 
+          id: itemId, 
+          category: activeCategory!,
+          name: itemData.en,
+          nameHi: itemData.hi,
+          nameMr: itemData.mr
+        }]);
       }
     }
     setSelectedItems(newSelected);
@@ -332,24 +339,37 @@ export default function SabjiRateApp() {
     const listName = `List - ${now.toLocaleDateString()} ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 
     // Create items from all selected items across categories
-    const items = allSelectedItems.map((selected: any) => ({
-      id: `${selected.id}-${Date.now()}`,
-      itemId: selected.id,
-      name: selected.name || 'Custom Item',
-      nameHi: selected.nameHi || '',
-      nameMr: selected.nameMr || '',
-      category: selected.category,
-      mode: 'weight',
-      quantity: {
-        grams: undefined,
-        ml: undefined,
-        name: 'Not selected',
-        nameHi: 'चयन नहीं',
-        nameMr: 'निवडले नाही',
-      },
-      price: '',
-      calculatedPrices: [],
-    }));
+    const items = allSelectedItems.map((selected: any, index: number) => {
+      // Find item data from the appropriate category
+      let itemData: any = null;
+      if (selected.category === Category.VEG_FRUITS) {
+        itemData = [...ALL_ITEMS.VEGETABLES, ...ALL_ITEMS.FRUITS].find((i: any) => i.id === selected.id);
+      } else if (selected.category === Category.DAIRY) {
+        itemData = ALL_ITEMS.DAIRY.find((i: any) => i.id === selected.id);
+      } else if (selected.category === Category.KIRANA) {
+        const allKirana = [...KIRANA_GRAINS, ...KIRANA_PULSES, ...KIRANA_SWEETENERS, ...KIRANA_OILS, ...KIRANA_BEVERAGES, ...KIRANA_BREAKFAST, ...KIRANA_SPICES, ...KIRANA_DRY_FRUITS];
+        itemData = allKirana.find((i: any) => i.id === selected.id);
+      }
+
+      return {
+        id: `${selected.id}-${Date.now()}-${index}`,
+        itemId: selected.id,
+        name: itemData?.en || selected.name || 'Custom Item',
+        nameHi: itemData?.hi || selected.nameHi || '',
+        nameMr: itemData?.mr || selected.nameMr || '',
+        category: selected.category,
+        mode: 'weight',
+        quantity: {
+          grams: undefined,
+          ml: undefined,
+          name: 'Not selected',
+          nameHi: 'चयन नहीं',
+          nameMr: 'निवडले नाही',
+        },
+        price: '',
+        calculatedPrices: [],
+      };
+    });
 
     const newList: ShoppingList = {
       id: `list-${Date.now()}`,
@@ -532,6 +552,7 @@ export default function SabjiRateApp() {
           setCalculatorDozen(1);
         }
       }
+      setShowCalculator(true);
     } else if (activeSubCategory && selectedItems.size === 1) {
       // Load selected item for new addition
       const selectedItem = getFilteredItems().find((item: any) => selectedItems.has(Array.from(selectedItems)[0]));
@@ -547,26 +568,27 @@ export default function SabjiRateApp() {
         setCalculatorQuantity(null);
         setCalculatorDozen(1);
       }
+      setShowCalculator(true);
+    } else if (forceCustom) {
+      // Show custom item prompt for custom items (Custom Item button)
+      setShowCustomItemPrompt(true);
+    } else if (customItemName && customItemCategory) {
+      // Opening calculator with custom item data (after custom item prompt)
+      setCalculatorMode('weight');
+      setCalculatorQuantity(null);
+      setCalculatorDozen(1);
+      setCalculatorItem({ en: customItemName, hi: '', mr: '' });
+      setCalculatorPrice('');
+      setShowCalculator(true);
     } else {
-      // When no item selected
+      // Floating calculator button - open blank calculator for adding custom item directly to list
       setCalculatorItem(null);
+      setCalculatorCustomName('');
       setCalculatorPrice('');
       setCalculatorQuantity(null);
       setCalculatorDozen(1);
-      // For fruits, default to dozen mode
-      setCalculatorMode(activeCategory === Category.VEG_FRUITS ? 'dozen' : 'weight');
-      setCalculatorDozen(1);
-    }
-    if (!forceCustom && !editingItem && !(activeSubCategory && selectedItems.size === 1)) {
-      // Only open calculator after custom item info is provided
-      if (customItemName && customItemCategory) {
-        setCalculatorMode('weight');
-        setCalculatorQuantity(null);
-        setCalculatorDozen(1);
-        setCalculatorItem({ en: customItemName, hi: '', mr: '' });
-        setCalculatorPrice('');
-        setShowCalculator(true);
-      }
+      setCalculatorMode('weight');
+      setShowCalculator(true);
     }
   };
 
@@ -614,9 +636,9 @@ export default function SabjiRateApp() {
       const newItem = {
         id: `item-${Date.now()}`,
         itemId: calculatorItem?.id || -1,
-        name: calculatorItem?.en || 'Custom Item',
-        nameHi: calculatorItem?.hi || 'कस्टम आइटम',
-        nameMr: calculatorItem?.mr || 'कस्टम आयटम',
+        name: calculatorCustomName || calculatorItem?.en || 'Custom Item',
+        nameHi: '',
+        nameMr: '',
         category: activeCategory!,
         mode: calculatorMode,
         quantity: quantityData,
@@ -630,6 +652,7 @@ export default function SabjiRateApp() {
     setShowCalculator(false);
     setEditingItem(null);
     setCalculatorItem(null);
+    setCalculatorCustomName('');
     setCalculatorPrice('');
     setCalculatorQuantity(null);
     setCalculatorDozen(1);
@@ -691,17 +714,6 @@ export default function SabjiRateApp() {
                   >
                     <ShoppingCart className="w-4 h-4 mr-2" />
                     Create List ({allSelectedItems.length})
-                <div className="flex justify-between items-center mb-4">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => { setActiveCategory(null); setActiveSubCategory(null); setSelectedItems(new Set()); setSearchQuery(x27); }}
-                    className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back
-                  </Button>
-                </div>
                   </Button>
                 </div>
               )}
@@ -718,35 +730,38 @@ export default function SabjiRateApp() {
             {(!activeSubCategory && (activeCategory === Category.VEG_FRUITS || activeCategory === Category.KIRANA)) ? (
               // Subcategory Selection View
               <div>
-                <div className="flex justify-between items-start mb-4">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => { setActiveCategory(null); setActiveSubCategory(null); setSelectedItems(new Set()); setSearchQuery(''); }}
-                    className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back to Subcategories
-                  </Button>
+                <div className="flex justify-between items-center mb-4">
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => { setActiveCategory(null); setActiveSubCategory(null); setSelectedItems(new Set()); setSearchQuery(''); }}
+                      className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Back
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openCalculator(true)}
+                      className="border-slate-300 text-slate-600 hover:bg-slate-200 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Custom Item
+                    </Button>
+                  </div>
                   <div>
                     <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                       {activeCategory === Category.VEG_FRUITS && '🥬🍎 Fruits & Vegetables'}
                       {activeCategory === Category.KIRANA && '🧺 Kirana / Grocery'}
                     </h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                      Select a subcategory
-                    </p>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openCalculator(true)}
-                    className="border-slate-300 text-slate-600 hover:bg-slate-200 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Custom Item
-                  </Button>
+                  <div></div>
                 </div>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+                  Select a subcategory
+                </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {activeCategory === Category.VEG_FRUITS && CATEGORY_INFO[Category.VEG_FRUITS].subcategories.map((sub) => (
                     <Card
@@ -782,30 +797,44 @@ export default function SabjiRateApp() {
               // Items View
               <div>
                 <div className="mb-4">
-                  {activeSubCategory && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => { setActiveSubCategory(null); setSearchQuery(''); }}
-                      className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
-                    >
-                      <ArrowLeft className="w-4 h-4 mr-2" />
-                      Back to Subcategories
-                    </Button>
-                  )}
-                  <h2 className="text-2xl font-bold mb-1 text-slate-900 dark:text-white">
-                    {activeSubCategory === SubCategory.VEGETABLES && '🥬 Vegetables'}
-                    {activeSubCategory === SubCategory.FRUITS && '🍎 Fruits'}
-                    {activeCategory === Category.DAIRY && '🥛 Milk & Dairy'}
-                    {activeSubCategory === SubCategory.KIRANA_GRAINS && '🌾 Grains'}
-                    {activeSubCategory === SubCategory.KIRANA_PULSES && '🫘 Pulses'}
-                    {activeSubCategory === SubCategory.KIRANA_SWEETENERS && '🍬 Sweeteners'}
-                    {activeSubCategory === SubCategory.KIRANA_OILS && '🫒 Oils'}
-                    {activeSubCategory === SubCategory.KIRANA_BEVERAGES && '☕ Beverages'}
-                    {activeSubCategory === SubCategory.KIRANA_BREAKFAST && '🥣 Breakfast'}
-                    {activeSubCategory === SubCategory.KIRANA_SPICES && '🌶 Spices'}
-                    {activeSubCategory === SubCategory.KIRANA_DRY_FRUITS && '🥜 Dry Fruits'}
-                  </h2>
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="flex gap-2">
+                      {activeSubCategory && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => { setActiveSubCategory(null); setSearchQuery(''); }}
+                          className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+                        >
+                          <ArrowLeft className="w-4 h-4 mr-2" />
+                          Back
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openCalculator(true)}
+                        className="border-slate-300 text-slate-600 hover:bg-slate-200 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Custom Item
+                      </Button>
+                    </div>
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                      {activeSubCategory === SubCategory.VEGETABLES && '🥬 Vegetables'}
+                      {activeSubCategory === SubCategory.FRUITS && '🍎 Fruits'}
+                      {activeCategory === Category.DAIRY && '🥛 Milk & Dairy'}
+                      {activeSubCategory === SubCategory.KIRANA_GRAINS && '🌾 Grains'}
+                      {activeSubCategory === SubCategory.KIRANA_PULSES && '🫘 Pulses'}
+                      {activeSubCategory === SubCategory.KIRANA_SWEETENERS && '🍬 Sweeteners'}
+                      {activeSubCategory === SubCategory.KIRANA_OILS && '🫒 Oils'}
+                      {activeSubCategory === SubCategory.KIRANA_BEVERAGES && '☕ Beverages'}
+                      {activeSubCategory === SubCategory.KIRANA_BREAKFAST && '🥣 Breakfast'}
+                      {activeSubCategory === SubCategory.KIRANA_SPICES && '🌶 Spices'}
+                      {activeSubCategory === SubCategory.KIRANA_DRY_FRUITS && '🥜 Dry Fruits'}
+                    </h2>
+                    <div></div>
+                  </div>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
                     Select items to create a shopping list
                   </p>
@@ -822,15 +851,6 @@ export default function SabjiRateApp() {
                       className="pl-10 bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:placeholder:text-slate-500"
                     />
                   </div>
-                  <Button
-                    variant="outline"
-                    size="default"
-                    onClick={() => openCalculator(true)}
-                    className="border-slate-300 text-slate-600 hover:bg-slate-200 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Custom Item
-                  </Button>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -1153,6 +1173,22 @@ export default function SabjiRateApp() {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
+            {/* Custom Item Name Input (when calculatorItem is null) */}
+            {!calculatorItem && (
+              <div>
+                <Label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                  Item Name
+                </Label>
+                <Input
+                  type="text"
+                  placeholder="Enter item name (optional)"
+                  value={calculatorCustomName}
+                  onChange={(e) => setCalculatorCustomName(e.target.value)}
+                  className="w-full px-4 py-3 bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:placeholder:text-slate-500"
+                />
+              </div>
+            )}
+
             {/* Mode Toggle - All 4 Options Available */}
             <div className="flex gap-2 flex-wrap">
               <Button
@@ -1340,7 +1376,7 @@ export default function SabjiRateApp() {
                 Select category
               </Label>
               <select
-                value={customItemCategory}
+                value={customItemCategory || ''}
                 onChange={(e) => setCustomItemCategory(e.target.value as Category)}
                 className="w-full px-4 py-3 rounded-md border bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
               >
@@ -1400,23 +1436,18 @@ export default function SabjiRateApp() {
                     const listToRemove = shoppingLists.find(l => l.id === listToDelete);
                     if (listToRemove) {
                       const isCurrentList = currentList && currentList.id === listToDelete;
-                      const listWasEmpty = listToRemove.items.length === 0;
 
-                      // Move current list to deleted history
+                      // Move list to deleted history before deleting
                       const deletedList = { ...listToRemove, id: `deleted-${Date.now()}` };
                       setDeletedLists([deletedList, ...deletedLists]);
 
-                      // Clear current list
+                      // Clear current list if it's the one being deleted
                       if (isCurrentList) {
                         setCurrentList(null);
                       }
 
-                      // Remove from active lists if empty
-                      if (listWasEmpty) {
-                        setShoppingLists(shoppingLists.filter(l => l.id !== listToDelete));
-                      } else {
-                        setShoppingLists(shoppingLists.map(l => l.id === listToDelete ? deletedList : l));
-                      }
+                      // Always remove the list from active lists
+                      setShoppingLists(shoppingLists.filter(l => l.id !== listToDelete));
                     }
                   }
                   setShowDeleteConfirm(false);
