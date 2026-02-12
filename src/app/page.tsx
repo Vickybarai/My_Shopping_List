@@ -691,6 +691,17 @@ export default function SabjiRateApp() {
                   >
                     <ShoppingCart className="w-4 h-4 mr-2" />
                     Create List ({allSelectedItems.length})
+                <div className="flex justify-between items-center mb-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => { setActiveCategory(null); setActiveSubCategory(null); setSelectedItems(new Set()); setSearchQuery(x27); }}
+                    className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back
+                  </Button>
+                </div>
                   </Button>
                 </div>
               )}
@@ -707,17 +718,16 @@ export default function SabjiRateApp() {
             {(!activeSubCategory && (activeCategory === Category.VEG_FRUITS || activeCategory === Category.KIRANA)) ? (
               // Subcategory Selection View
               <div>
-                <div className="mb-4">
+                <div className="flex justify-between items-start mb-4">
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => { setActiveCategory(null); setSelectedItems(new Set()); setSearchQuery(''); }}
+                    onClick={() => { setActiveCategory(null); setActiveSubCategory(null); setSelectedItems(new Set()); setSearchQuery(''); }}
                     className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
                   >
-                    <ArrowLeft className="w-4 h-4" />
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back to Subcategories
                   </Button>
-                </div>
-                <div className="flex justify-between items-start mb-4">
                   <div>
                     <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                       {activeCategory === Category.VEG_FRUITS && '🥬🍎 Fruits & Vegetables'}
