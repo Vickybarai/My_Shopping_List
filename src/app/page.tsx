@@ -667,25 +667,13 @@ export default function SabjiRateApp() {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Header */}
-      <header className="sticky top-0 z-40 backdrop-blur-lg border-b bg-white/80 border-slate-300 dark:bg-black/80 dark:border-slate-800">
+      {/* Header - Only app name and theme toggle */}
+      <header className="sticky top-0 z-50 backdrop-blur-lg border-b bg-white/80 border-slate-300 dark:bg-black/80 dark:border-slate-800">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {activeCategory && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => { setActiveCategory(null); setActiveSubCategory(null); setSelectedItems(new Set()); setSearchQuery(''); }}
-                  className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                </Button>
-              )}
-              <h1 className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-lime-400 to-lime-600 bg-clip-text text-transparent">
-                SabjiRate
-              </h1>
-            </div>
+            <h1 className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-lime-400 to-lime-600 bg-clip-text text-transparent">
+              SabjiRate
+            </h1>
             <div className="flex gap-2 items-center">
               {mounted && (
                 <Button
@@ -697,28 +685,52 @@ export default function SabjiRateApp() {
                   {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                 </Button>
               )}
-              {activeCategory && (allSelectedItems.length > 0) && (
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setAllSelectedItems([])}
-                    className="border-red-300 text-red-600 hover:bg-red-200 dark:border-red-600 dark:text-red-300 dark:hover:bg-red-800 dark:hover:text-white"
-                  >
-                    Clear All ({allSelectedItems.length})
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={createList}
-                    className="bg-lime-500 hover:bg-lime-600 text-black font-medium"
-                  >
-                    <ShoppingCart className="w-4 h-4 mr-2" />
-                    Create List ({allSelectedItems.length})
-                  </Button>
-                </div>
-              )}
             </div>
           </div>
+
+          {/* Sub-header - Back, Clear, Custom Item buttons */}
+          {activeCategory && (
+            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => { setActiveCategory(null); setActiveSubCategory(null); setSelectedItems(new Set()); setSearchQuery(''); }}
+                className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+              {allSelectedItems.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setAllSelectedItems([])}
+                  className="border-red-300 text-red-600 hover:bg-red-200 dark:border-red-600 dark:text-red-300 dark:hover:bg-red-800 dark:hover:text-white"
+                >
+                  Clear All ({allSelectedItems.length})
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => openCalculator(true)}
+                className="border-slate-300 text-slate-600 hover:bg-slate-200 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Custom Item
+              </Button>
+              {allSelectedItems.length > 0 && (
+                <Button
+                  size="sm"
+                  onClick={createList}
+                  className="bg-lime-500 hover:bg-lime-600 text-black font-medium"
+                >
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  Create List ({allSelectedItems.length})
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </header>
 
@@ -730,38 +742,16 @@ export default function SabjiRateApp() {
             {(!activeSubCategory && (activeCategory === Category.VEG_FRUITS || activeCategory === Category.KIRANA)) ? (
               // Subcategory Selection View
               <div>
-                <div className="flex justify-between items-center mb-4">
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => { setActiveCategory(null); setActiveSubCategory(null); setSelectedItems(new Set()); setSearchQuery(''); }}
-                      className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
-                    >
-                      <ArrowLeft className="w-4 h-4 mr-2" />
-                      Back
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openCalculator(true)}
-                      className="border-slate-300 text-slate-600 hover:bg-slate-200 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Custom Item
-                    </Button>
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                      {activeCategory === Category.VEG_FRUITS && '🥬🍎 Fruits & Vegetables'}
-                      {activeCategory === Category.KIRANA && '🧺 Kirana / Grocery'}
-                    </h2>
-                  </div>
-                  <div></div>
+                {/* Sub-header sub - Category name and text */}
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+                    {activeCategory === Category.VEG_FRUITS && '🥬🍎 Fruits & Vegetables'}
+                    {activeCategory === Category.KIRANA && '🧺 Kirana / Grocery'}
+                  </h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Select a subcategory
+                  </p>
                 </div>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-                  Select a subcategory
-                </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {activeCategory === Category.VEG_FRUITS && CATEGORY_INFO[Category.VEG_FRUITS].subcategories.map((sub) => (
                     <Card
@@ -796,45 +786,21 @@ export default function SabjiRateApp() {
             ) : (
               // Items View
               <div>
-                <div className="mb-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <div className="flex gap-2">
-                      {activeSubCategory && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => { setActiveSubCategory(null); setSearchQuery(''); }}
-                          className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
-                        >
-                          <ArrowLeft className="w-4 h-4 mr-2" />
-                          Back
-                        </Button>
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openCalculator(true)}
-                        className="border-slate-300 text-slate-600 hover:bg-slate-200 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Custom Item
-                      </Button>
-                    </div>
-                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                      {activeSubCategory === SubCategory.VEGETABLES && '🥬 Vegetables'}
-                      {activeSubCategory === SubCategory.FRUITS && '🍎 Fruits'}
-                      {activeCategory === Category.DAIRY && '🥛 Milk & Dairy'}
-                      {activeSubCategory === SubCategory.KIRANA_GRAINS && '🌾 Grains'}
-                      {activeSubCategory === SubCategory.KIRANA_PULSES && '🫘 Pulses'}
-                      {activeSubCategory === SubCategory.KIRANA_SWEETENERS && '🍬 Sweeteners'}
-                      {activeSubCategory === SubCategory.KIRANA_OILS && '🫒 Oils'}
-                      {activeSubCategory === SubCategory.KIRANA_BEVERAGES && '☕ Beverages'}
-                      {activeSubCategory === SubCategory.KIRANA_BREAKFAST && '🥣 Breakfast'}
-                      {activeSubCategory === SubCategory.KIRANA_SPICES && '🌶 Spices'}
-                      {activeSubCategory === SubCategory.KIRANA_DRY_FRUITS && '🥜 Dry Fruits'}
-                    </h2>
-                    <div></div>
-                  </div>
+                {/* Sub-header sub - Subcategory name and text */}
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+                    {activeSubCategory === SubCategory.VEGETABLES && '🥬 Vegetables'}
+                    {activeSubCategory === SubCategory.FRUITS && '🍎 Fruits'}
+                    {activeCategory === Category.DAIRY && '🥛 Milk & Dairy'}
+                    {activeSubCategory === SubCategory.KIRANA_GRAINS && '🌾 Grains'}
+                    {activeSubCategory === SubCategory.KIRANA_PULSES && '🫘 Pulses'}
+                    {activeSubCategory === SubCategory.KIRANA_SWEETENERS && '🍬 Sweeteners'}
+                    {activeSubCategory === SubCategory.KIRANA_OILS && '🫒 Oils'}
+                    {activeSubCategory === SubCategory.KIRANA_BEVERAGES && '☕ Beverages'}
+                    {activeSubCategory === SubCategory.KIRANA_BREAKFAST && '🥣 Breakfast'}
+                    {activeSubCategory === SubCategory.KIRANA_SPICES && '🌶 Spices'}
+                    {activeSubCategory === SubCategory.KIRANA_DRY_FRUITS && '🥜 Dry Fruits'}
+                  </h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
                     Select items to create a shopping list
                   </p>
