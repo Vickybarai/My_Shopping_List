@@ -177,10 +177,16 @@ export default function SabjiRateApp() {
   const [calculatorPrice, setCalculatorPrice] = useState('');
   const [calculatorQuantity, setCalculatorQuantity] = useState<any>(null);
   const [calculatorDozen, setCalculatorDozen] = useState<number>(1);
-  const [calculatorMode, setCalculatorMode] = useState<'weight' | 'packet' | 'dozen'>('weight');
-  
+  const [calculatorMode, setCalculatorMode] = useState<'weight' | 'packet' | 'dozen' | 'liter'>('weight');
+
+  // Custom Item Prompt States
+  const [customItemName, setCustomItemName] = useState('');
+  const [customItemCategory, setCustomItemCategory] = useState<Category | null>(null);
+  const [showCustomItemPrompt, setShowCustomItemPrompt] = useState(false);
+
   // List management state
-  const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [allSelectedItems, setAllSelectedItems] = useState<Array<{id: string, category: Category}>>([]);
   const [shoppingLists, setShoppingLists] = useState<ShoppingList[]>(() => {
     if (typeof window !== 'undefined') {
       const savedLists = localStorage.getItem('shoppingLists');
@@ -302,29 +308,37 @@ export default function SabjiRateApp() {
     );
   };
 
-  const toggleItemSelection = (itemId: number) => {
+  const toggleItemSelection = (itemId: string) => {
     const newSelected = new Set(selectedItems);
     if (newSelected.has(itemId)) {
       newSelected.delete(itemId);
+      // Remove from allSelectedItems
+      setAllSelectedItems(allSelectedItems.filter(item => item.id !== itemId));
     } else {
       newSelected.add(itemId);
+      // Add to allSelectedItems with current category
+      const itemData = getFilteredItems().find((item: any) => item.id === itemId);
+      if (itemData) {
+        setAllSelectedItems([...allSelectedItems, { id: itemId, category: activeCategory! }]);
+      }
     }
     setSelectedItems(newSelected);
   };
 
   const createList = () => {
-    if (selectedItems.size === 0) return;
-    
+    if (allSelectedItems.length === 0) return;
+
     const now = new Date();
     const listName = `List - ${now.toLocaleDateString()} ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-    
-    const items = getFilteredItems().filter((item: any) => selectedItems.has(item.id)).map((item: any) => ({
-      id: `${item.id}-${Date.now()}`,
-      itemId: item.id,
-      name: item.en,
-      nameHi: item.hi,
-      nameMr: item.mr,
-      category: activeCategory!,
+
+    // Create items from all selected items across categories
+    const items = allSelectedItems.map((selected: any) => ({
+      id: `${selected.id}-${Date.now()}`,
+      itemId: selected.id,
+      name: selected.name || 'Custom Item',
+      nameHi: selected.nameHi || '',
+      nameMr: selected.nameMr || '',
+      category: selected.category,
       mode: 'weight',
       quantity: {
         grams: undefined,
@@ -342,10 +356,11 @@ export default function SabjiRateApp() {
       name: listName,
       createdAt: now,
       items,
-      category: activeCategory!,
+      category: 'mixed', // Indicate mixed categories
     };
 
     setShoppingLists([newList, ...shoppingLists]);
+    setAllSelectedItems([]);
     setSelectedItems(new Set());
     setActiveCategory(null);
     setActiveSubCategory(null);
@@ -499,14 +514,21 @@ export default function SabjiRateApp() {
           setCalculatorDozen(1);
         }
       } else {
-        // Only default to dozen for fruits if no mode exists
+        // Default settings based on category
         if (activeCategory === Category.VEG_FRUITS) {
+          // Fruits: Default to dozen mode
           setCalculatorMode('dozen');
           setCalculatorDozen(1);
           setCalculatorQuantity(null);
+        } else if (activeCategory === Category.DAIRY) {
+          // Dairy: Default to liter mode with 500ml
+          setCalculatorMode('liter');
+          setCalculatorQuantity(DAIRY_QUANTITIES[1]); // 500 ml
+          setCalculatorDozen(1);
         } else {
+          // Others: Default to weight mode with 1 Kilo
           setCalculatorMode('weight');
-          setCalculatorQuantity(null);
+          setCalculatorQuantity(INDIAN_WEIGHTS[5]); // 1 Kilo
           setCalculatorDozen(1);
         }
       }
@@ -533,8 +555,19 @@ export default function SabjiRateApp() {
       setCalculatorDozen(1);
       // For fruits, default to dozen mode
       setCalculatorMode(activeCategory === Category.VEG_FRUITS ? 'dozen' : 'weight');
+      setCalculatorDozen(1);
     }
-    setShowCalculator(true);
+    if (!forceCustom && !editingItem && !(activeSubCategory && selectedItems.size === 1)) {
+      // Only open calculator after custom item info is provided
+      if (customItemName && customItemCategory) {
+        setCalculatorMode('weight');
+        setCalculatorQuantity(null);
+        setCalculatorDozen(1);
+        setCalculatorItem({ en: customItemName, hi: '', mr: '' });
+        setCalculatorPrice('');
+        setShowCalculator(true);
+      }
+    }
   };
 
   // Handle Add/Update Item in Calculator
@@ -641,15 +674,25 @@ export default function SabjiRateApp() {
                   {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                 </Button>
               )}
-              {activeCategory && selectedItems.size > 0 && (
-                <Button
-                  size="sm"
-                  onClick={createList}
-                  className="bg-lime-500 hover:bg-lime-600 text-black font-medium"
-                >
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  Create List ({selectedItems.size})
-                </Button>
+              {activeCategory && (allSelectedItems.length > 0) && (
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setAllSelectedItems([])}
+                    className="border-red-300 text-red-600 hover:bg-red-200 dark:border-red-600 dark:text-red-300 dark:hover:bg-red-800 dark:hover:text-white"
+                  >
+                    Clear All ({allSelectedItems.length})
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={createList}
+                    className="bg-lime-500 hover:bg-lime-600 text-black font-medium"
+                  >
+                    <ShoppingCart className="w-4 h-4 mr-2" />
+                    Create List ({allSelectedItems.length})
+                  </Button>
+                </div>
               )}
             </div>
           </div>
@@ -863,7 +906,7 @@ export default function SabjiRateApp() {
                             setCurrentList(updatedList);
                             setShoppingLists(shoppingLists.map(l => l.id === currentList!.id ? updatedList : l));
                           }}
-                          className="border-red-300 text-red-600 dark:border-red-600 dark:text-red-300"
+                          className="bg-red-600 text-white border-red-700 hover:bg-red-700 dark:bg-red-700 dark:border-red-700 dark:text-white"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -1100,74 +1143,40 @@ export default function SabjiRateApp() {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            {/* Mode Toggle - Context Aware */}
-            <div className="flex gap-2">
-              {activeCategory === Category.VEG_FRUITS ? (
-                <>
-                  <Button
-                    type="button"
-                    variant={calculatorMode === 'dozen' ? 'default' : 'outline'}
-                    onClick={() => { setCalculatorMode('dozen'); setCalculatorQuantity(null); }}
-                    className={calculatorMode === 'dozen' ? 'bg-lime-500 hover:bg-lime-600 text-black' : 'border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300'}
-                  >
-                    ◉ 1 Dozen (Default)
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={calculatorMode === 'weight' ? 'default' : 'outline'}
-                    onClick={() => { setCalculatorMode('weight'); setCalculatorQuantity(null); }}
-                    className={calculatorMode === 'weight' ? 'bg-lime-500 hover:bg-lime-600 text-black' : 'border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300'}
-                  >
-                    ⚖️ Weight
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={calculatorMode === 'packet' ? 'default' : 'outline'}
-                    onClick={() => { setCalculatorMode('packet'); setCalculatorQuantity(null); }}
-                    className={calculatorMode === 'packet' ? 'bg-lime-500 hover:bg-lime-600 text-black' : 'border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300'}
-                  >
-                    📦 Packet
-                  </Button>
-                </>
-              ) : activeCategory === Category.DAIRY ? (
-                <>
-                  <Button
-                    type="button"
-                    variant={calculatorMode === 'weight' ? 'default' : 'outline'}
-                    onClick={() => { setCalculatorMode('weight'); setCalculatorQuantity(null); }}
-                    className={calculatorMode === 'weight' ? 'bg-lime-500 hover:bg-lime-600 text-black' : 'border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300'}
-                  >
-                    ⚖️ Liter
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={calculatorMode === 'packet' ? 'default' : 'outline'}
-                    onClick={() => { setCalculatorMode('packet'); setCalculatorQuantity(null); }}
-                    className={calculatorMode === 'packet' ? 'bg-lime-500 hover:bg-lime-600 text-black' : 'border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300'}
-                  >
-                    📦 Packet
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button
-                    type="button"
-                    variant={calculatorMode === 'weight' ? 'default' : 'outline'}
-                    onClick={() => { setCalculatorMode('weight'); setCalculatorQuantity(null); }}
-                    className={calculatorMode === 'weight' ? 'bg-lime-500 hover:bg-lime-600 text-black' : 'border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300'}
-                  >
-                    ⚖️ Weight
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={calculatorMode === 'packet' ? 'default' : 'outline'}
-                    onClick={() => { setCalculatorMode('packet'); setCalculatorQuantity(null); }}
-                    className={calculatorMode === 'packet' ? 'bg-lime-500 hover:bg-lime-600 text-black' : 'border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300'}
-                  >
-                    📦 Packet
-                  </Button>
-                </>
-              )}
+            {/* Mode Toggle - All 4 Options Available */}
+            <div className="flex gap-2 flex-wrap">
+              <Button
+                type="button"
+                variant={calculatorMode === 'dozen' ? 'default' : 'outline'}
+                onClick={() => { setCalculatorMode('dozen'); setCalculatorQuantity(null); }}
+                className={calculatorMode === 'dozen' ? 'bg-lime-500 hover:bg-lime-600 text-black' : 'border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300'}
+              >
+                ◉ Dozen
+              </Button>
+              <Button
+                type="button"
+                variant={calculatorMode === 'weight' ? 'default' : 'outline'}
+                onClick={() => { setCalculatorMode('weight'); setCalculatorQuantity(null); }}
+                className={calculatorMode === 'weight' ? 'bg-lime-500 hover:bg-lime-600 text-black' : 'border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300'}
+              >
+                ⚖️ Weight
+              </Button>
+              <Button
+                type="button"
+                variant={calculatorMode === 'packet' ? 'default' : 'outline'}
+                onClick={() => { setCalculatorMode('packet'); setCalculatorQuantity(null); }}
+                className={calculatorMode === 'packet' ? 'bg-lime-500 hover:bg-lime-600 text-black' : 'border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300'}
+              >
+                📦 Packet
+              </Button>
+              <Button
+                type="button"
+                variant={calculatorMode === 'liter' ? 'default' : 'outline'}
+                onClick={() => { setCalculatorMode('liter'); setCalculatorQuantity(null); }}
+                className={calculatorMode === 'liter' ? 'bg-lime-500 hover:bg-lime-600 text-black' : 'border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300'}
+              >
+                🥤 Liter
+              </Button>
             </div>
 
             {/* Quantity Selection */}
@@ -1189,10 +1198,31 @@ export default function SabjiRateApp() {
                     ))}
                   </select>
                 </>
+              ) : calculatorMode === 'liter' ? (
+                <>
+                  <Label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                    Select quantity (liters)
+                  </Label>
+                  <select
+                    value={calculatorQuantity?.ml ? String(calculatorQuantity.ml) : ''}
+                    onChange={(e) => {
+                      const quantity = DAIRY_QUANTITIES.find(q => String(q.ml) === e.target.value);
+                      setCalculatorQuantity(quantity);
+                    }}
+                    className="w-full px-4 py-3 rounded-md border bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                  >
+                    <option value="">Select liter</option>
+                    {DAIRY_QUANTITIES.map((q, idx) => (
+                      <option key={idx} value={String(q.ml)}>
+                        {q.name} ({q.nameHi} / {q.nameMr})
+                      </option>
+                    ))}
+                  </select>
+                </>
               ) : (
                 <>
                   <Label className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                    Select quantity ({calculatorMode === 'weight' ? (activeCategory === Category.DAIRY ? 'liter' : 'weight') : 'packet count'})
+                    Select quantity ({calculatorMode === 'weight' ? 'weight' : 'packet count'})
                   </Label>
                   <select
                     value={calculatorMode === 'weight'
@@ -1200,14 +1230,14 @@ export default function SabjiRateApp() {
                       : String(calculatorQuantity?.packets !== undefined ? calculatorQuantity.packets : '')}
                     onChange={(e) => {
                       const value = e.target.value;
-                      const quantities = calculatorMode === 'packet' ? PACKET_QUANTITIES : (activeCategory === Category.DAIRY ? DAIRY_QUANTITIES : INDIAN_WEIGHTS);
+                      const quantities = calculatorMode === 'packet' ? PACKET_QUANTITIES : INDIAN_WEIGHTS;
                       const quantity = quantities.find(q => String(calculatorMode === 'packet' ? q.packets : (q.grams || q.ml)) === value);
                       setCalculatorQuantity(quantity);
                     }}
                     className="w-full px-4 py-3 rounded-md border bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                   >
-                    <option value="">Select {calculatorMode === 'weight' ? (activeCategory === Category.DAIRY ? 'liter' : 'quantity') : 'packet count'}</option>
-                    {(calculatorMode === 'packet' ? PACKET_QUANTITIES : (activeCategory === Category.DAIRY ? DAIRY_QUANTITIES : INDIAN_WEIGHTS)).map((q, idx) => (
+                    <option value="">Select {calculatorMode === 'weight' ? 'weight' : 'packet count'}</option>
+                    {(calculatorMode === 'packet' ? PACKET_QUANTITIES : INDIAN_WEIGHTS).map((q, idx) => (
                       <option key={idx} value={String(calculatorMode === 'packet' ? q.packets : (q.grams || q.ml))}>
                         {q.name} ({q.nameHi} / {q.nameMr}) {calculatorMode === 'weight' ? `- ${q.grams ? `${q.grams}g` : `${q.ml}ml`}` : ''}
                       </option>
@@ -1274,6 +1304,62 @@ export default function SabjiRateApp() {
         </DialogContent>
       </Dialog>
 
+      {/* Custom Item Prompt Dialog */}
+      <Dialog open={showCustomItemPrompt} onOpenChange={setShowCustomItemPrompt}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl text-slate-900 dark:text-white">
+              Add Custom Item
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                Enter item name
+              </Label>
+              <Input
+                type="text"
+                placeholder="Enter item name (e.g., Special Chocolate)"
+                value={customItemName}
+                onChange={(e) => setCustomItemName(e.target.value)}
+                className="w-full px-4 py-3 rounded-md border bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+              />
+            </div>
+            <div>
+              <Label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                Select category
+              </Label>
+              <select
+                value={customItemCategory}
+                onChange={(e) => setCustomItemCategory(e.target.value as Category)}
+                className="w-full px-4 py-3 rounded-md border bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+              >
+                <option value="">Select category</option>
+                <option value={Category.VEG_FRUITS}>🥬🍎 Fruits & Vegetables</option>
+                <option value={Category.DAIRY}>🥛 Milk & Dairy</option>
+                <option value={Category.KIRANA}>🧺 Kirana / Grocery</option>
+              </select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowCustomItemPrompt(false)}
+              className="border-slate-400 text-slate-600 hover:bg-slate-200 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => { setShowCustomItemPrompt(false); if (customItemName && customItemCategory) { openCalculator(true); }}}
+              disabled={!customItemName || !customItemCategory}
+              className="bg-lime-500 hover:bg-lime-600 text-black font-medium"
+            >
+              Continue to Calculator
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Delete Confirmation Dialog */}
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <DialogContent className="max-w-md">
@@ -1301,20 +1387,30 @@ export default function SabjiRateApp() {
                 variant="destructive"
                 onClick={() => {
                   if (listToDelete) {
-                    // Move current list to deleted history
                     const listToRemove = shoppingLists.find(l => l.id === listToDelete);
                     if (listToRemove) {
+                      const isCurrentList = currentList && currentList.id === listToDelete;
+                      const listWasEmpty = listToRemove.items.length === 0;
+
+                      // Move current list to deleted history
                       const deletedList = { ...listToRemove, id: `deleted-${Date.now()}` };
                       setDeletedLists([deletedList, ...deletedLists]);
-                      setShoppingLists(shoppingLists.filter(l => l.id !== listToDelete));
+
+                      // Clear current list
+                      if (isCurrentList) {
+                        setCurrentList(null);
+                      }
+
+                      // Remove from active lists if empty
+                      if (listWasEmpty) {
+                        setShoppingLists(shoppingLists.filter(l => l.id !== listToDelete));
+                      } else {
+                        setShoppingLists(shoppingLists.map(l => l.id === listToDelete ? deletedList : l));
+                      }
                     }
-                    // Clear current list
-                    if (currentList && currentList.id === listToDelete) {
-                      setCurrentList(null);
-                    }
-                    setShowDeleteConfirm(false);
-                    setListToDelete(null);
                   }
+                  setShowDeleteConfirm(false);
+                  setListToDelete(null);
                 }}
                 className="bg-red-500 hover:bg-red-600 text-white"
               >
