@@ -835,6 +835,19 @@ export default function SabjiRateApp() {
                     </Card>
                   ))}
                 </div>
+                
+                {/* Custom Item Button in subcategory selection view */}
+                <div className="mt-6 flex justify-center">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openCalculator(true)}
+                    className="border-slate-300 text-slate-600 hover:bg-slate-200 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Custom Item
+                  </Button>
+                </div>
               </div>
             ) : (
               // Items View
