@@ -234,8 +234,11 @@ export default function SabjiRateApp() {
   }, [shoppingLists, deletedLists, mounted]);
 
   // Handle back button with discard confirmation
-  const handleBackWithDiscardCheck = (navigationAction: () => void) => {
-    if (allSelectedItems.length > 0) {
+  // Only show discard confirmation when going to HOME (setActiveCategory(null))
+  // When going back to subcategories (setActiveSubCategory(null)), preserve selections
+  const handleBackWithDiscardCheck = (navigationAction: () => void, goingToHome: boolean) => {
+    if (goingToHome && allSelectedItems.length > 0) {
+      // Show discard confirmation only when going to HOME with selected items
       setPendingNavigation(() => {
         setAllSelectedItems([]);
         setSelectedItems(new Set());
@@ -245,6 +248,7 @@ export default function SabjiRateApp() {
       });
       setShowDiscardConfirm(true);
     } else {
+      // Going back to subcategories - preserve selections, no confirmation
       navigationAction();
     }
   };
@@ -737,11 +741,13 @@ export default function SabjiRateApp() {
                 size="sm"
                 onClick={() => handleBackWithDiscardCheck(() => {
                   if (activeSubCategory) {
+                    // Going to subcategories - preserve selections
                     setActiveSubCategory(null);
                   } else {
+                    // Going to home - might show discard confirmation
                     setActiveCategory(null);
                   }
-                })}
+                }, activeSubCategory === null)}
                 className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
