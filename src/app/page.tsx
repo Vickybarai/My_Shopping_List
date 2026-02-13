@@ -753,16 +753,6 @@ export default function SabjiRateApp() {
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
               </Button>
-              {allSelectedItems.length > 0 && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setAllSelectedItems([])}
-                  className="border-red-300 text-red-600 hover:bg-red-200 dark:border-red-600 dark:text-red-300 dark:hover:bg-red-800 dark:hover:text-white"
-                >
-                  Clear All ({allSelectedItems.length})
-                </Button>
-              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -770,7 +760,7 @@ export default function SabjiRateApp() {
                 className="border-slate-300 text-slate-600 hover:bg-slate-200 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Custom Item
+                Add custom item to
               </Button>
               {allSelectedItems.length > 0 && (
                 <Button
