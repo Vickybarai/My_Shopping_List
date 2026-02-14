@@ -563,6 +563,14 @@ export default function SabjiRateApp() {
 
   // Open Calculator Helper
   const openCalculator = (forceCustom: boolean = false) => {
+    // Priority 1: Force custom item prompt (when explicitly clicking "+" button)
+    if (forceCustom) {
+      // Show custom item prompt for custom items (Custom Item button)
+      setShowCustomItemPrompt(true);
+      return;
+    }
+
+    // Priority 2: Editing existing item
     if (editingItem) {
       // Load existing item data when editing
       setCalculatorItem(editingItem);
@@ -614,9 +622,6 @@ export default function SabjiRateApp() {
         setCalculatorDozen(1);
       }
       setShowCalculator(true);
-    } else if (forceCustom) {
-      // Show custom item prompt for custom items (Custom Item button)
-      setShowCustomItemPrompt(true);
     } else if (customItemName && customItemCategory) {
       // Opening calculator with custom item data (after custom item prompt)
       setCalculatorMode('weight');
